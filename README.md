@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Emmanuel Obiechina — Football Portfolio
 
-## Getting Started
+A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-First, run the development server:
+**Status:** Phase 2 complete. The server-rendered HTML portfolio (Layer 1) is finished. The 3D world starts in Phase 3.
+
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # static export to ./out
+npm test           # Vitest
+npm run lint
+npm run typecheck  # run after a build or dev start (Next generates route types)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Preview the static build: `npx serve out` (or any static file server).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The build is fully static (`output: "export"`). Deploy `out/` to any static host (Vercel, Netlify, Cloudflare Pages, GitHub Pages).
 
-## Learn More
+Set **`NEXT_PUBLIC_SITE_URL`** to the final domain at build time (e.g. `https://emmanuelobiechina.dev`). It is used for canonical URLs, Open Graph tags, the sitemap and robots.txt. Without it they point at `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Editing content
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All portfolio content is typed data in `content/`. No component contains portfolio text.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| File | What it holds |
+|---|---|
+| `content/profile.ts` | Name, headline, intro, bio, strengths, skills, certifications, languages |
+| `content/experience.ts` | Roles (ordered by end date, current first) |
+| `content/projects.ts` | Project boards: copy, links and board accent colour |
+| `content/links.ts` | Email, GitHub, LinkedIn, résumé path |
+| `public/resume.pdf` | The downloadable résumé — replace the file to update it |
 
-## Deploy on Vercel
+`npm test` checks content integrity: unique slugs, cross-references between experience and projects, https links and date order.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Content sources and open items: `CONTENT.md`, `CONTENT_TODO.md`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Social preview image
+
+`app/opengraph-image.png` is a committed PNG so static hosts serve it with the right content type. It is generated from `scripts/opengraph-image.tsx`; the regeneration steps are in that file's header comment.
+
+## Structure
+
+```
+app/          routes: home, /projects/[slug], sitemap, robots, icon, OG image
+content/      typed portfolio data (source of truth)
+lib/          site constants, date formatting
+ui/           server-rendered sections, reused by the 3D panels in later phases
+tests/        Vitest
+```
