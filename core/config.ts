@@ -46,3 +46,27 @@ export const CAMERA_REDUCED = {
   DEAD_ZONE_Z: 5,
   FOLLOW_LAMBDA: 10,
 } as const;
+
+/** Proximity discovery (SPEC §7.4). Per-landmark radii can override the defaults. */
+export const DISCOVERY = {
+  DEFAULT_NEAR_RADIUS: 7,
+  DEFAULT_ACTIVE_RADIUS: 4,
+  /** Hysteresis: a state is left only beyond radius + padding. */
+  EXIT_PADDING: 1,
+  /** A challenger must score this much better to take over from the active landmark. */
+  SWITCH_MARGIN: 1.5,
+  /** Up to this many units of preference for landmarks in the direction of travel. */
+  DIRECTION_BONUS: 0.75,
+  /** Below this speed, direction of travel is ignored. */
+  DIRECTION_MIN_SPEED: 0.5,
+  /** The active landmark lingers this long after the ball leaves (no flashing). */
+  EXIT_GRACE: 0.35,
+} as const;
+
+/** Camera framing when a landmark is active (SPEC §8). */
+export const FOCUS = {
+  BLEND: 0.35,
+  /** Fraction the camera distance shrinks at full focus. */
+  ZOOM: 0.12,
+  LAMBDA: 2.5,
+} as const;

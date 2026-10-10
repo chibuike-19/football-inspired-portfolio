@@ -2,7 +2,7 @@
 
 A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-**Status:** Phase 4 complete. The ball moves with WASD / arrow keys or by dragging (mouse or touch), and the camera follows. Landmark discovery arrives in Phase 5.
+**Status:** Phase 5 complete. Rolling the ball near a landmark lights it up and shows a preview card with its content and links, with no click needed. Expanded panels, the HUD menu and deep links arrive in Phase 6.
 
 ## Run
 
@@ -19,7 +19,7 @@ Preview the static build: `npx serve out` (or any static file server).
 
 ## Tuning movement and camera
 
-All feel-related numbers (speed, acceleration, friction, camera height and distance, look-ahead) live in `core/config.ts`. They supersede the starting values in SPEC §13.
+All feel-related numbers (speed, acceleration, friction, camera height and distance, look-ahead, discovery radii, grace period, switch margin) live in `core/config.ts`. Landmark positions and per-landmark radii are in `world/landmarks.ts`. They supersede the starting values in SPEC §13.
 
 ## How the 3D view loads
 

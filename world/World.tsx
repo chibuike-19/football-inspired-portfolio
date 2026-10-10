@@ -13,6 +13,8 @@ import { BALL } from "./layout";
 import { SPAWN } from "./landmarks";
 import { BOUNDS, OBSTACLES } from "./obstacles";
 import { WorldController } from "./WorldController";
+import { GroundMarkers } from "./GroundMarkers";
+import { DiscoveryAnnouncer, PreviewCard, PreviewTracker } from "./PreviewOverlay";
 import { Lighting } from "./Environment";
 import { Goals } from "./Goals";
 import { Pitch } from "./Pitch";
@@ -47,7 +49,7 @@ function useDebugHook(simulation: Simulation) {
   useEffect(() => {
     if (!DEBUG) return;
     const hook = {
-      getState: () => ({ ball: { ...simulation.ball } }),
+      getState: () => ({ ball: { ...simulation.ball }, activeLandmarkId: useWorldStore.getState().activeLandmarkId }),
       setBall: (x: number, z: number) => {
         simulation.place(x, z);
         invalidate();
@@ -121,6 +123,9 @@ export default function World() {
 
   const surface = useRef<HTMLDivElement>(null);
   const ball = useRef<Mesh>(null);
+  const card = useRef<HTMLDivElement>(null);
+  const setReducedMotion = useWorldStore((state) => state.setReducedMotion);
+  useEffect(() => setReducedMotion(reducedMotion), [reducedMotion, setReducedMotion]);
   useEffect(() => input.setGameSurface(surface.current), [input]);
 
   // Canvas textures draw text, so wait for the page fonts first.
@@ -160,18 +165,22 @@ export default function World() {
           reducedMotion={reducedMotion}
           freeCamera={debugCamera !== null}
         />
+        <PreviewTracker card={card} simulation={simulation} />
         {fontsReady && (
           <>
             <Pitch pixelsPerUnit={settings.pitchPixelsPerUnit} />
             <Goals />
             <Stadium crowdDensity={settings.crowdDensity} />
             <Structures />
+            <GroundMarkers />
             <Ball ref={ball} />
             <ReadySignal />
           </>
         )}
       </Canvas>
       <Joystick surface={surface} input={input} />
+      <PreviewCard card={card} />
+      <DiscoveryAnnouncer />
     </div>
   );
 }

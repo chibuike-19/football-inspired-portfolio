@@ -1,4 +1,4 @@
-import { CAMERA, CAMERA_REDUCED } from "./config";
+import { CAMERA, CAMERA_REDUCED, FOCUS } from "./config";
 import { clamp, damp, length } from "./math";
 
 export interface CameraState {
@@ -13,6 +13,11 @@ export interface CameraState {
   /** Reduced-motion focus point (dead-zone follow). */
   fx: number;
   fz: number;
+  /** Landmark focus weight, eased 0..1 (SPEC §8). */
+  focusWeight: number;
+  /** Last landmark focus point, kept while the weight eases out. */
+  focusX: number;
+  focusZ: number;
 }
 
 export interface CameraInput {
@@ -21,6 +26,8 @@ export interface CameraInput {
   vx: number;
   vz: number;
   reducedMotion: boolean;
+  /** Active landmark position on the pitch, if any. */
+  focus?: { x: number; z: number } | null;
 }
 
 interface Goal {
@@ -72,6 +79,12 @@ function reducedGoal(state: CameraState, input: CameraInput, dt: number): Goal {
 
 export function goalFor(state: CameraState, input: CameraInput, dt: number): Goal {
   if (input.reducedMotion) return reducedGoal(state, input, dt);
+  // Ease landmark focus in and out; remember the point so it can ease out smoothly.
+  if (input.focus) {
+    state.focusX = input.focus.x;
+    state.focusZ = input.focus.z;
+  }
+  state.focusWeight = damp(state.focusWeight, input.focus ? 1 : 0, FOCUS.LAMBDA, dt);
   // Look-ahead in the direction of travel, clamped (SPEC §8).
   let aheadX = input.vx * CAMERA.LOOK_AHEAD_TIME;
   let aheadZ = input.vz * CAMERA.LOOK_AHEAD_TIME;
@@ -80,11 +93,36 @@ export function goalFor(state: CameraState, input: CameraInput, dt: number): Goa
     aheadX *= CAMERA.LOOK_AHEAD_MAX / aheadLength;
     aheadZ *= CAMERA.LOOK_AHEAD_MAX / aheadLength;
   }
-  return followGoal(input.ballX, input.ballZ, aheadX, aheadZ);
+  const goal = followGoal(input.ballX, input.ballZ, aheadX, aheadZ);
+  const w = state.focusWeight;
+  if (w > 1e-4) {
+    // Look towards the midpoint of ball and landmark, and close in slightly.
+    const midX = (input.ballX + state.focusX) / 2;
+    const midZ = (input.ballZ + state.focusZ) / 2;
+    goal.tx += (midX - goal.tx) * FOCUS.BLEND * w;
+    goal.tz += (midZ - goal.tz) * FOCUS.BLEND * w;
+    const zoom = 1 - FOCUS.ZOOM * w;
+    goal.px = goal.tx + (goal.px - goal.tx) * zoom;
+    goal.py = goal.ty + (goal.py - goal.ty) * zoom;
+    goal.pz = Math.min(goal.tz + (goal.pz - goal.tz) * zoom, CAMERA.MAX_Z);
+  }
+  return goal;
 }
 
 export function createCamera(ballX: number, ballZ: number, reducedMotion: boolean): CameraState {
-  const state: CameraState = { px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0, fx: ballX, fz: ballZ };
+  const state: CameraState = {
+    px: 0,
+    py: 0,
+    pz: 0,
+    tx: 0,
+    ty: 0,
+    tz: 0,
+    fx: ballX,
+    fz: ballZ,
+    focusWeight: 0,
+    focusX: ballX,
+    focusZ: ballZ,
+  };
   Object.assign(state, goalFor(state, { ballX, ballZ, vx: 0, vz: 0, reducedMotion }, 0));
   return state;
 }
@@ -99,7 +137,8 @@ export function stepCamera(state: CameraState, input: CameraInput, dt: number): 
     if (Math.abs(next - goal[key]) > 0.002) moving = true;
     state[key] = next;
   }
-  return moving || (input.reducedMotion && (Math.abs(state.fx - input.ballX) > CAMERA_REDUCED.DEAD_ZONE_X || Math.abs(state.fz - input.ballZ) > CAMERA_REDUCED.DEAD_ZONE_Z));
+  const focusSettling = Math.abs(state.focusWeight - (input.focus ? 1 : 0)) > 0.002;
+  return moving || focusSettling || (input.reducedMotion && (Math.abs(state.fx - input.ballX) > CAMERA_REDUCED.DEAD_ZONE_X || Math.abs(state.fz - input.ballZ) > CAMERA_REDUCED.DEAD_ZONE_Z));
 }
 
 /** Vertical FOV that keeps at least MIN_HORIZONTAL_FOV on portrait screens. */

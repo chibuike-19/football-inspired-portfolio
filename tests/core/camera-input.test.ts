@@ -111,3 +111,22 @@ describe("camera near the south stand", () => {
     }
   });
 });
+
+describe("landmark focus", () => {
+  it("eases the look target towards the landmark and back", () => {
+    const c = createCamera(0, 0, false);
+    const base = createCamera(0, 0, false);
+    for (let i = 0; i < 600; i++) stepCamera(c, { ballX: 0, ballZ: 0, vx: 0, vz: 0, reducedMotion: false, focus: { x: 10, z: 0 } }, 1 / 60);
+    expect(c.tx).toBeGreaterThan(base.tx + 1);
+    expect(c.focusWeight).toBeGreaterThan(0.99);
+    for (let i = 0; i < 600; i++) stepCamera(c, { ballX: 0, ballZ: 0, vx: 0, vz: 0, reducedMotion: false, focus: null }, 1 / 60);
+    expect(c.tx).toBeCloseTo(base.tx, 2);
+  });
+
+  it("does not jump when focus starts", () => {
+    const c = createCamera(0, 0, false);
+    const before = c.tx;
+    stepCamera(c, { ballX: 0, ballZ: 0, vx: 0, vz: 0, reducedMotion: false, focus: { x: 10, z: 0 } }, 1 / 60);
+    expect(Math.abs(c.tx - before)).toBeLessThan(0.1);
+  });
+});

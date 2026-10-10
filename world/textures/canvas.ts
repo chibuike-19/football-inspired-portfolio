@@ -69,7 +69,8 @@ export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: 
     if (lines.length === maxLines) break;
   }
   if (lines.length < maxLines && line) lines.push(line);
-  if (lines.length === maxLines && lines.join(" ").length < text.length) {
+  // Compare word content only: runs of spaces in `text` collapse when re-joined.
+  if (lines.length === maxLines && lines.join(" ").length < words.join(" ").length) {
     let last = lines[maxLines - 1];
     while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
     lines[maxLines - 1] = `${last.trimEnd()}…`;

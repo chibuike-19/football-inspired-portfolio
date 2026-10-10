@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { InstancedMesh, Object3D, type Texture } from "three";
+import { InstancedMesh, Object3D, type MeshBasicMaterial, type Texture } from "three";
+import { lerp } from "@/core/math";
+import { useEmphasis } from "./emphasis";
 import { contact, experience, getProject, profile } from "@/content";
 import type { Project } from "@/content/types";
 import { BOARD, GOAL, PITCH } from "./layout";
-import { LANDMARKS, type LandmarkDef } from "./landmarks";
+import { LANDMARKS, yawTowardsCamera, type LandmarkDef } from "./landmarks";
 import { createCanvas, fitText, fonts, toTexture } from "./textures/canvas";
 import { createBoardTexture, createScreenTexture } from "./textures/screens";
 
 const FRAME = "#1b2023";
 const BOARD_TILT = -0.12;
+/** Screen brightness when the ball is far away; full brightness when active. */
+const SCREEN_IDLE = 0.62;
 
 /** Creates a GPU resource once per mount and disposes it on unmount. */
 function useDisposable<T extends { dispose: () => void }>(factory: () => T): T {
@@ -19,12 +23,59 @@ function useDisposable<T extends { dispose: () => void }>(factory: () => T): T {
   return value;
 }
 
-/** Unlit LED face so boards and screens read clearly at night. */
-function ScreenFace({ texture, width, height, z = 0.01 }: { texture: Texture; width: number; height: number; z?: number }) {
+/**
+ * Unlit LED face so boards and screens read clearly at night. With an
+ * `emphasisId` it brightens as the ball approaches that landmark.
+ */
+function ScreenFace({
+  texture,
+  width,
+  height,
+  z = 0.01,
+  emphasisId,
+  back = false,
+}: {
+  texture: Texture;
+  width: number;
+  height: number;
+  z?: number;
+  emphasisId?: string;
+  /** Also show the face from behind (double-sided signage). */
+  back?: boolean;
+}) {
+  const material = useRef<MeshBasicMaterial>(null);
+  useEmphasis(emphasisId ?? "", (value) => {
+    if (!emphasisId || !material.current) return;
+    const level = lerp(SCREEN_IDLE, 1, value);
+    material.current.color.setRGB(level, level, level);
+  });
+  const initial = emphasisId ? SCREEN_IDLE : 1;
   return (
-    <mesh position={[0, 0, z]}>
-      <planeGeometry args={[width, height]} />
-      <meshBasicMaterial map={texture} toneMapped={false} />
+    <>
+      <mesh position={[0, 0, z]}>
+        <planeGeometry args={[width, height]} />
+        <meshBasicMaterial ref={material} map={texture} toneMapped={false} color={[initial, initial, initial]} />
+      </mesh>
+      {back && (
+        <mesh position={[0, 0, -z]} rotation-y={Math.PI}>
+          <planeGeometry args={[width, height]} />
+          <meshBasicMaterial map={texture} toneMapped={false} color={[0.8, 0.8, 0.8]} />
+        </mesh>
+      )}
+    </>
+  );
+}
+
+/** Accent light strip that fades in with emphasis (no real light added). */
+function GlowStrip({ id, size, position, color = "#f5b544" }: { id: string; size: [number, number, number]; position: [number, number, number]; color?: string }) {
+  const material = useRef<MeshBasicMaterial>(null);
+  useEmphasis(id, (value) => {
+    if (material.current) material.current.opacity = value;
+  });
+  return (
+    <mesh position={position}>
+      <boxGeometry args={size} />
+      <meshBasicMaterial ref={material} color={color} transparent opacity={0} toneMapped={false} depthWrite={false} />
     </mesh>
   );
 }
@@ -38,7 +89,14 @@ function ProjectBoard({ landmark, project }: { landmark: LandmarkDef; project: P
           <boxGeometry args={[BOARD.width, BOARD.height, 0.22]} />
           <meshStandardMaterial color={FRAME} roughness={0.6} />
         </mesh>
-        <ScreenFace texture={texture} width={BOARD.width - 0.08} height={BOARD.height - 0.08} z={0.115} />
+        <ScreenFace
+          texture={texture}
+          width={BOARD.width - 0.08}
+          height={BOARD.height - 0.08}
+          z={0.115}
+          emphasisId={landmark.id}
+        />
+        <GlowStrip id={landmark.id} size={[BOARD.width, 0.06, 0.24]} position={[0, BOARD.height / 2 + 0.03, 0]} color={project.accent} />
       </group>
     </group>
   );
@@ -70,8 +128,8 @@ function FillerBoards() {
   const texture = useDisposable(createFillerTexture);
   const placements = useMemo(() => {
     const list: { x: number; z: number; ry: number }[] = [];
-    const southZ = PITCH.halfWidth + BOARD.offset + 1.6; // behind the dugout line
-    for (const x of [-27, -18, 18, 27]) list.push({ x, z: southZ, ry: Math.PI });
+    const southZ = PITCH.halfWidth + BOARD.offset;
+    for (const x of [-25.5, -15.3, -5.1, 5.1, 15.3, 25.5]) list.push({ x, z: southZ, ry: Math.PI });
     const endX = PITCH.halfLength + GOAL.depth + 1.6;
     for (const side of [-1, 1]) {
       // East end leaves room for the tunnel (z ≈ -10); west for the contact terminal (z ≈ 9).
@@ -138,7 +196,8 @@ function Scoreboard({ landmark }: { landmark: LandmarkDef }) {
         <boxGeometry args={[W + 0.6, H + 0.6, 0.6]} />
         <meshStandardMaterial color={FRAME} roughness={0.7} />
       </mesh>
-      <ScreenFace texture={texture} width={W} height={H} z={0.31} />
+      <ScreenFace texture={texture} width={W} height={H} z={0.31} emphasisId={landmark.id} />
+      <GlowStrip id={landmark.id} size={[W + 0.6, 0.14, 0.62]} position={[0, -H / 2 - 0.37, 0]} />
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * (W / 2 - 1), -H / 2 - 1, -0.1]}>
           <boxGeometry args={[0.5, 2, 0.5]} />
@@ -164,42 +223,45 @@ function Dugout({ landmark }: { landmark: LandmarkDef }) {
         ],
       }),
   );
+  const shelterWidth = 4;
   const shelter = (x: number) => (
     <group key={x} position={[x, 0, 0]}>
       {/* Back, roof and side panels of a dugout shelter; local +z faces the pitch. */}
       <mesh position={[0, 1.1, -0.9]} castShadow>
-        <boxGeometry args={[5, 2.2, 0.15]} />
+        <boxGeometry args={[shelterWidth, 2.2, 0.15]} />
         <meshStandardMaterial color="#2c3438" />
       </mesh>
       <mesh position={[0, 2.25, -0.2]} rotation-x={0.12} castShadow>
-        <boxGeometry args={[5.2, 0.12, 1.8]} />
+        <boxGeometry args={[shelterWidth + 0.2, 0.12, 1.8]} />
         <meshStandardMaterial color="#9fb3bf" transparent opacity={0.55} roughness={0.2} />
       </mesh>
+      <GlowStrip id={landmark.id} size={[shelterWidth + 0.2, 0.08, 0.08]} position={[0, 2.2, 0.72]} />
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 2.5, 1.1, -0.2]}>
+        <mesh key={s} position={[(s * shelterWidth) / 2, 1.1, -0.2]}>
           <boxGeometry args={[0.1, 2.2, 1.6]} />
           <meshStandardMaterial color="#9fb3bf" transparent opacity={0.4} roughness={0.2} />
         </mesh>
       ))}
       <mesh position={[0, 0.45, -0.5]}>
-        <boxGeometry args={[4.6, 0.9, 0.6]} />
+        <boxGeometry args={[shelterWidth - 0.4, 0.9, 0.6]} />
         <meshStandardMaterial color="#1f7a3e" roughness={0.8} />
       </mesh>
     </group>
   );
   return (
     <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
-      {shelter(-4.6)}
-      {shelter(4.6)}
-      <group position={[0, 1.9, -0.3]}>
+      {shelter(-3.4)}
+      {shelter(3.4)}
+      {/* Screen raised above the shelters and the boards in front of them. */}
+      <group position={[0, 3.1, -0.3]}>
         <mesh>
           <boxGeometry args={[3.5, 1.95, 0.2]} />
           <meshStandardMaterial color={FRAME} />
         </mesh>
-        <ScreenFace texture={texture} width={3.3} height={1.65} z={0.11} />
+        <ScreenFace texture={texture} width={3.3} height={1.65} z={0.11} emphasisId={landmark.id} />
       </group>
-      <mesh position={[0, 0.45, -0.3]}>
-        <boxGeometry args={[0.2, 0.9, 0.2]} />
+      <mesh position={[0, 1.1, -0.3]}>
+        <boxGeometry args={[0.2, 2.2, 0.2]} />
         <meshStandardMaterial color={FRAME} />
       </mesh>
     </group>
@@ -238,17 +300,20 @@ function Tunnel({ landmark }: { landmark: LandmarkDef }) {
         <boxGeometry args={[width + 0.8, height + 0.6, 0.3]} />
         <meshStandardMaterial color="#05080a" roughness={1} />
       </mesh>
-      <group position={[0, height + 1.5, 0.3]}>
+      <GlowStrip id={landmark.id} size={[width + 0.8, 0.12, 0.08]} position={[0, height + 0.36, 0.14]} />
+      {/* Sign turned towards the follow camera so it reads from the pitch. */}
+      <group position={[0, height + 1.25, 0.3]} rotation-y={yawTowardsCamera(landmark.structure, landmark.position) - landmark.rotation}>
         <mesh>
           <boxGeometry args={[4.8, 2, 0.2]} />
           <meshStandardMaterial color={FRAME} />
         </mesh>
-        <ScreenFace texture={texture} width={4.6} height={1.8} z={0.11} />
+        <ScreenFace texture={texture} width={4.6} height={1.8} z={0.11} emphasisId={landmark.id} />
       </group>
     </group>
   );
 }
 
+/** The kiosk turns to face the follow camera instead of the pitch centre. */
 function ContactTerminal({ landmark }: { landmark: LandmarkDef }) {
   const texture = useDisposable(
     () =>
@@ -261,7 +326,10 @@ function ContactTerminal({ landmark }: { landmark: LandmarkDef }) {
       }),
   );
   return (
-    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
+    <group
+      position={landmark.structure as [number, number, number]}
+      rotation-y={yawTowardsCamera(landmark.structure, landmark.position)}
+    >
       <mesh position={[0, 0.7, 0]} castShadow>
         <boxGeometry args={[0.6, 1.4, 0.5]} />
         <meshStandardMaterial color={FRAME} />
@@ -271,7 +339,8 @@ function ContactTerminal({ landmark }: { landmark: LandmarkDef }) {
           <boxGeometry args={[2.9, 1.9, 0.16]} />
           <meshStandardMaterial color={FRAME} />
         </mesh>
-        <ScreenFace texture={texture} width={2.7} height={1.69} z={0.09} />
+        <ScreenFace texture={texture} width={2.7} height={1.69} z={0.09} emphasisId={landmark.id} />
+        <GlowStrip id={landmark.id} size={[2.9, 0.07, 0.17]} position={[0, -0.99, 0]} />
       </group>
     </group>
   );

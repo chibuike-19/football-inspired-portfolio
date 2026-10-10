@@ -128,32 +128,35 @@ The canvas loads with `next/dynamic` and `ssr: false`, after Layer 1 has painted
 ## 5. World design
 
 ### 5.1 Layout
-A compact, stylized stadium. The pitch is scaled down (about 60 × 40 world units) so every landmark is reachable in a few seconds. Coordinates are illustrative and get calibrated in Phase 2.
+A compact, stylized stadium. The pitch is 60 × 40 world units so every landmark is a few seconds' roll away. Exact positions live in `world/landmarks.ts`.
+
+**Revised in Phase 5:** the camera always looks north, so every landmark display sits on the north side or at the ends where it faces the camera. The technical area moved from the south touchline (where it was behind the camera) to the centre of the north touchline.
 
 ```
-                         [ SCOREBOARD — Profile ]
-     ┌──────────────────────────────────────────────────────┐
-     │  [AD] [AD] [AD]  ← project boards (north touchline) │
-     │                                                      │
- [GOAL│                      ( ○ )                          │GOAL]
- Contact                center circle                  Résumé /
-     │                   (spawn point)                 Tunnel
-     │                                                      │
-     │        [ DUGOUT / TECHNICAL AREA — Experience ]      │
-     └──────────────────────────────────────────────────────┘
+                          [ SCOREBOARD — Profile ]
+     ┌───────────────────────────────────────────────────────────┐
+     │ [AD]   [AD]     [ DUGOUTS — Experience ]     [AD]   [AD]  │
+     │  -22    -11                0                  11     22   │
+ [GOAL│                         ( ○ )                     Résumé /│GOAL]
+Contact                    center circle                   Tunnel
+(kiosk│                     (spawn point)                         │
+ faces│                                                           │
+camera)                                                           │
+     └───────────────────────────────────────────────────────────┘
 ```
 
 | Landmark ID | Physical structure | Content |
 |---|---|---|
 | `profile` | Center circle + main scoreboard | Name, role, short intro, core strengths |
-| `experience` | Dugout / technical-area screen | Roles at DevSpot and Rova |
-| `project:<slug>` | One perimeter ad board per project (3–5 boards, ≥ 6 units apart) | Project preview |
-| `resume` | Players' tunnel | Résumé preview, open/download |
-| `contact` | Goal-side terminal at one end | Email, LinkedIn, GitHub |
+| `experience` | Dugouts and technical-area screen, north touchline centre | DevSpot and Rova (preview); all roles (panel) |
+| `project:<slug>` | One perimeter ad board per project, two groups of two either side of the dugouts | Project preview |
+| `resume` | Players' tunnel at the east end; its sign turns to face the camera | Résumé preview, open/download |
+| `contact` | Goal-side kiosk at the west end, turned to face the camera | Email, LinkedIn, GitHub |
 
-- Spawn is at the center circle, facing the project boards, with the scoreboard visible.
-- Landmarks are spread out spatially but nothing is more than about 25 units from spawn.
-- Project boards are spaced so their active radii do not overlap. Switching hysteresis (§7.4) handles the edges.
+- Spawn is at the center circle, facing the boards and dugouts, with the scoreboard visible.
+- Activation zones never overlap (tested); switching hysteresis (§7.4) still guards the edges.
+- Every landmark is within 30 units of spawn.
+- A soft ring on the turf marks each landmark's spot; it brightens as the ball approaches.
 
 ### 5.2 Art direction
 - Palette: rich pitch greens, charcoal/near-black stadium, white typography, **one** restrained accent color (proposed: warm amber `#F5B544`, final choice in Phase 2) used only for interactive emphasis.

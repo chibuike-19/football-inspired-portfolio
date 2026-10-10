@@ -35,6 +35,20 @@ describe("landmark layout", () => {
     }
   });
 
+  it("activation zones never overlap, so only distance decides what is active", () => {
+    for (let i = 0; i < LANDMARKS.length; i++) {
+      for (let j = i + 1; j < LANDMARKS.length; j++) {
+        const a = LANDMARKS[i];
+        const b = LANDMARKS[j];
+        expect(distance(a.position, b.position), `${a.id} ↔ ${b.id}`).toBeGreaterThanOrEqual(a.activeRadius + b.activeRadius);
+      }
+    }
+  });
+
+  it("the camera faces every landmark's display (structures on the north side or ends)", () => {
+    for (const { id, structure } of LANDMARKS) expect(structure[2], id).toBeLessThan(PITCH.halfWidth);
+  });
+
   it("no landmark sits in a goal mouth", () => {
     for (const { id, position } of LANDMARKS) {
       const inMouth = Math.abs(position[1]) < GOAL.halfWidth && Math.abs(position[0]) > PITCH.halfLength - 2;

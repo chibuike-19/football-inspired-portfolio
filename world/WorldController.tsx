@@ -4,11 +4,14 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type RefObject } from "react";
 import { PerspectiveCamera, Quaternion, Vector3, type Mesh } from "three";
 import { createCamera, fovForAspect, stepCamera } from "@/core/camera";
+import { createDiscovery, stepDiscovery } from "@/core/discovery";
 import { MOVEMENT } from "@/core/config";
 import { lerp } from "@/core/math";
 import { speed } from "@/core/movement";
 import type { Simulation } from "@/core/simulation";
+import { useWorldStore } from "@/state/store";
 import type { InputController } from "./input";
+import { cameraFocus, DISCOVERY_LANDMARKS, LANDMARK_BY_ID } from "./landmarks";
 import { BALL } from "./layout";
 
 interface Props {
@@ -37,6 +40,7 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
   const cameraState = useRef(createCamera(simulation.ball.x, simulation.ball.z, reducedMotion));
   const rendered = useRef({ x: simulation.ball.x, z: simulation.ball.z });
   const idle = useRef(true);
+  const discovery = useRef(createDiscovery(DISCOVERY_LANDMARKS));
 
   // Wake the loop on input.
   useEffect(() => input.onChange(() => invalidate()), [input, invalidate]);
@@ -82,17 +86,23 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
     rendered.current.x = x;
     rendered.current.z = z;
 
+    // Discovery runs on the simulated ball; the store is written only on change.
+    const found = stepDiscovery(discovery.current, DISCOVERY_LANDMARKS, now, dt);
+    if (found.changed) useWorldStore.getState().setDiscovery(discovery.current.activeId, discovery.current.states);
+    const active = discovery.current.activeId ? LANDMARK_BY_ID.get(discovery.current.activeId) : undefined;
+
     let cameraMoving = false;
     if (!freeCamera) {
       const c = cameraState.current;
-      cameraMoving = stepCamera(c, { ballX: x, ballZ: z, vx: now.vx, vz: now.vz, reducedMotion }, dt);
+      const focus = active ? cameraFocus(active) : null;
+      cameraMoving = stepCamera(c, { ballX: x, ballZ: z, vx: now.vx, vz: now.vz, reducedMotion, focus }, dt);
       camera.position.set(c.px, c.py, c.pz);
       camera.lookAt(c.tx, c.ty, c.tz);
     }
 
-    const active = cameraMoving || speed(now) > 0 || direction.x !== 0 || direction.z !== 0;
-    idle.current = !active;
-    if (active) invalidate();
+    const busy = cameraMoving || found.pending || speed(now) > 0 || direction.x !== 0 || direction.z !== 0;
+    idle.current = !busy;
+    if (busy) invalidate();
   });
 
   return null;
