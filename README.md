@@ -2,7 +2,7 @@
 
 A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-**Status:** Phase 2 complete. The server-rendered HTML portfolio (Layer 1) is finished. The 3D world starts in Phase 3.
+**Status:** Phase 3 complete. The HTML portfolio (Layer 1) is finished and the 3D stadium loads on top of it with a static camera. Ball movement arrives in Phase 4.
 
 ## Run
 
@@ -16,6 +16,16 @@ npm run typecheck  # run after a build or dev start (Next generates route types)
 ```
 
 Preview the static build: `npx serve out` (or any static file server).
+
+## How the 3D view loads
+
+`world/WorldMount.tsx` decides between the 3D stadium and Classic view:
+
+- **Classic view** is used without WebGL2, with Save-Data on, when the visitor chose it before, or when the URL has a `#section` deep link (until Phase 6).
+- The world loads lazily after the HTML has painted. If it isn't ready in 15 s the page stays classic and offers "3D stadium ready: enter" when it finishes.
+- A render error or lost graphics context falls back to Classic view with a short notice.
+
+To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. This is compiled out of normal builds.
 
 ## Deploy
 
@@ -49,6 +59,8 @@ Content sources and open items: `CONTENT.md`, `CONTENT_TODO.md`.
 app/          routes: home, /projects/[slug], sitemap, robots, icon, OG image
 content/      typed portfolio data (source of truth)
 lib/          site constants, date formatting
+state/        discrete UI state (zustand)
 ui/           server-rendered sections, reused by the 3D panels in later phases
+world/        3D stadium: layout constants, landmarks, scene components, canvas textures
 tests/        Vitest
 ```

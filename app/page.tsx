@@ -1,5 +1,6 @@
 import { contact, profile } from "@/content";
 import { SITE_URL } from "@/lib/site";
+import { WorldMount } from "@/world/WorldMount";
 import { SiteFooter, SiteHeader } from "@/ui/SiteHeader";
 import { ContactSection } from "@/ui/sections/ContactSection";
 import { ExperienceSection } from "@/ui/sections/ExperienceSection";
@@ -27,15 +28,19 @@ const personJsonLd = {
 export default function Home() {
   return (
     <>
-      <SiteHeader />
-      <main id="main">
-        <ProfileSection />
-        <ExperienceSection />
-        <ProjectsSection />
-        <ResumeSection />
-        <ContactSection />
-      </main>
-      <SiteFooter />
+      {/* Rendered first so its controls come before the hidden page in tab order. */}
+      <WorldMount />
+      <div data-layer1>
+        <SiteHeader />
+        <main id="main">
+          <ProfileSection />
+          <ExperienceSection />
+          <ProjectsSection />
+          <ResumeSection />
+          <ContactSection />
+        </main>
+        <SiteFooter />
+      </div>
       <script
         type="application/ld+json"
         // Static, trusted data; escape "<" so the JSON can't close the script tag.

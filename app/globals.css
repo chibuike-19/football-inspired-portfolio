@@ -45,3 +45,55 @@ body {
   background: var(--color-accent);
   color: var(--color-accent-ink);
 }
+
+/* ---------- 3D world (SPEC §3.1) ---------- */
+
+.world-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--color-ink);
+  transition: opacity 600ms ease, visibility 0s linear 0s;
+}
+
+.world-stage[data-state="hidden"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* Stay hidden instantly; fade only on the way in. */
+  transition: none;
+}
+
+html.world-active {
+  overflow: hidden;
+}
+
+/* Layer 1 is visually hidden but kept in the DOM and the accessibility tree. */
+html.world-active [data-layer1] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes world-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
+.world-progress {
+  animation: world-progress 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-stage {
+    transition: none;
+  }
+  .world-progress {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
