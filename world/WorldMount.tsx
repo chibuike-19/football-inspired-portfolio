@@ -95,15 +95,7 @@ export function WorldMount() {
 
   return (
     <>
-      {loadWorld && (
-        <div className="world-stage" data-state={active ? "active" : "hidden"} aria-hidden={!active}>
-          <WorldErrorBoundary onError={() => fail("render-error")}>
-            <World />
-          </WorldErrorBoundary>
-        </div>
-      )}
-
-      {/* Interim world chrome; the full HUD replaces it in Phase 6. */}
+      {/* Interim world chrome; the full HUD replaces it in Phase 6. Before the stage in the DOM so Tab reaches "Classic view" first. */}
       {active && (
         <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <p className="font-display text-lg font-bold uppercase tracking-wide text-white drop-shadow">
@@ -112,6 +104,14 @@ export function WorldMount() {
           <button type="button" onClick={enterClassic} className={buttonStyles.secondary}>
             Classic view
           </button>
+        </div>
+      )}
+
+      {loadWorld && (
+        <div className="world-stage" data-state={active ? "active" : "hidden"} aria-hidden={!active}>
+          <WorldErrorBoundary onError={() => fail("render-error")}>
+            <World />
+          </WorldErrorBoundary>
         </div>
       )}
 

@@ -68,6 +68,13 @@ html.world-active {
   overflow: hidden;
 }
 
+/* Keyboard focus on the game surface: inset ring so it isn't clipped by the viewport. */
+.game-surface:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -4px;
+  border-radius: 0;
+}
+
 /* Layer 1 is visually hidden but kept in the DOM and the accessibility tree. */
 html.world-active [data-layer1] {
   position: absolute;
