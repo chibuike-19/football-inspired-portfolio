@@ -83,7 +83,7 @@ function GlowStrip({ id, size, position, color = "#f5b544" }: { id: string; size
 function ProjectBoard({ landmark, project }: { landmark: LandmarkDef; project: Project }) {
   const texture = useDisposable(() => createBoardTexture(project));
   return (
-    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
+    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation} userData={{ landmarkId: landmark.id }}>
       <group position={[0, BOARD.height / 2 + 0.05, 0]} rotation-x={BOARD_TILT}>
         <mesh castShadow>
           <boxGeometry args={[BOARD.width, BOARD.height, 0.22]} />
@@ -191,7 +191,7 @@ function Scoreboard({ landmark }: { landmark: LandmarkDef }) {
   const W = 15;
   const H = W * (720 / 2048);
   return (
-    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
+    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation} userData={{ landmarkId: landmark.id }}>
       <mesh>
         <boxGeometry args={[W + 0.6, H + 0.6, 0.6]} />
         <meshStandardMaterial color={FRAME} roughness={0.7} />
@@ -249,7 +249,7 @@ function Dugout({ landmark }: { landmark: LandmarkDef }) {
     </group>
   );
   return (
-    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
+    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation} userData={{ landmarkId: landmark.id }}>
       {shelter(-3.4)}
       {shelter(3.4)}
       {/* Screen raised above the shelters and the boards in front of them. */}
@@ -283,7 +283,7 @@ function Tunnel({ landmark }: { landmark: LandmarkDef }) {
   const height = 3.2;
   const length = 4;
   return (
-    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation}>
+    <group position={landmark.structure as [number, number, number]} rotation-y={landmark.rotation} userData={{ landmarkId: landmark.id }}>
       {/* Canopy: a half-cylinder shell extending onto the pitch side. */}
       <mesh position={[0, height - width / 2, length / 2]} rotation-x={-Math.PI / 2} castShadow>
         <cylinderGeometry args={[width / 2, width / 2, length, 24, 1, true, -Math.PI / 2, Math.PI]} />
@@ -329,6 +329,7 @@ function ContactTerminal({ landmark }: { landmark: LandmarkDef }) {
     <group
       position={landmark.structure as [number, number, number]}
       rotation-y={yawTowardsCamera(landmark.structure, landmark.position)}
+      userData={{ landmarkId: landmark.id }}
     >
       <mesh position={[0, 0.7, 0]} castShadow>
         <boxGeometry args={[0.6, 1.4, 0.5]} />

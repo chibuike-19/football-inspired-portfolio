@@ -3,16 +3,17 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type RefObject } from "react";
 import { PerspectiveCamera, Quaternion, Vector3, type Mesh } from "three";
-import { createCamera, fovForAspect, stepCamera } from "@/core/camera";
+import { autopilotInput } from "@/core/autopilot";
+import { createCamera, fovForAspect, stepCamera, type CameraState } from "@/core/camera";
 import { createDiscovery, stepDiscovery } from "@/core/discovery";
-import { MOVEMENT } from "@/core/config";
+import { AUTOPILOT, CAMERA, MOVEMENT } from "@/core/config";
 import { lerp } from "@/core/math";
 import { speed } from "@/core/movement";
 import type { Simulation } from "@/core/simulation";
 import { useWorldStore } from "@/state/store";
 import type { InputController } from "./input";
-import { cameraFocus, DISCOVERY_LANDMARKS, LANDMARK_BY_ID } from "./landmarks";
-import { BALL } from "./layout";
+import { cameraFocus, DISCOVERY_LANDMARKS, LANDMARK_BY_ID, SPAWN } from "./landmarks";
+import { BALL, PITCH } from "./layout";
 
 interface Props {
   simulation: Simulation;
@@ -26,6 +27,22 @@ interface Props {
 const axis = new Vector3();
 const spin = new Quaternion();
 
+/** Opening shot (SPEC §10.5): start a little higher and further back, then settle. */
+function openingCamera(x: number, z: number, reducedMotion: boolean): CameraState {
+  const camera = createCamera(x, z, reducedMotion);
+  if (!reducedMotion) {
+    camera.py += 5;
+    camera.pz = Math.min(camera.pz + 4, CAMERA.MAX_Z);
+  }
+  return camera;
+}
+
+function autopilotTarget(target: string): { x: number; z: number } | null {
+  if (target === "spawn") return { x: SPAWN[0], z: SPAWN[1] };
+  const landmark = LANDMARK_BY_ID.get(target);
+  return landmark ? { x: landmark.position[0], z: landmark.position[1] } : null;
+}
+
 /**
  * Frame orchestration (SPEC §3.2): input → fixed-step simulation → ball mesh
  * → camera. Everything per-frame lives in refs; React never re-renders here.
@@ -37,7 +54,12 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
   const invalidate = useThree((state) => state.invalidate);
   const size = useThree((state) => state.size);
 
-  const cameraState = useRef(createCamera(simulation.ball.x, simulation.ball.z, reducedMotion));
+  const cameraState = useRef<CameraState | null>(null);
+  if (cameraState.current === null) cameraState.current = openingCamera(simulation.ball.x, simulation.ball.z, reducedMotion);
+  const pilotStarted = useRef<{ requestId: number; time: number } | null>(null);
+  const clock = useRef(0);
+  const autopilot = useWorldStore((s) => s.autopilot);
+  useEffect(() => invalidate(), [autopilot, invalidate]);
   const rendered = useRef({ x: simulation.ball.x, z: simulation.ball.z });
   const idle = useRef(true);
   const discovery = useRef(createDiscovery(DISCOVERY_LANDMARKS));
@@ -54,8 +76,11 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
     invalidate();
   }, [get, size, freeCamera, invalidate]);
 
-  // Switching motion preference re-frames the camera on the next frame.
+  // Switching motion preference re-frames the camera (not on mount: keep the opening shot).
+  const lastReduced = useRef(reducedMotion);
   useEffect(() => {
+    if (lastReduced.current === reducedMotion) return;
+    lastReduced.current = reducedMotion;
     cameraState.current = createCamera(simulation.ball.x, simulation.ball.z, reducedMotion);
     invalidate();
   }, [reducedMotion, simulation, invalidate]);
@@ -63,7 +88,25 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
   useFrame(({ camera }, delta) => {
     // After an idle period the clock delta is the whole idle time; treat it as one frame.
     const dt = idle.current ? 1 / 60 : Math.min(delta, MOVEMENT.MAX_FRAME_DT);
-    const direction = input.direction();
+    clock.current += dt;
+    let direction = input.direction();
+    const userInput = direction.x !== 0 || direction.z !== 0;
+
+    // Menu navigation (SPEC §7.5): any user input takes over immediately.
+    const store = useWorldStore.getState();
+    const pilot = store.autopilot;
+    if (pilot && userInput) {
+      store.clearAutopilot();
+    } else if (pilot) {
+      const target = autopilotTarget(pilot.target);
+      if (pilotStarted.current?.requestId !== pilot.requestId) {
+        pilotStarted.current = { requestId: pilot.requestId, time: clock.current };
+        if (target && reducedMotion) simulation.place(target.x, target.z); // teleport, no travel
+      }
+      const steer = target ? autopilotInput(simulation.ball, target, { pitchHalfLength: PITCH.halfLength }) : null;
+      if (!steer || clock.current - pilotStarted.current.time > AUTOPILOT.TIMEOUT) store.clearAutopilot();
+      else direction = steer;
+    }
     const alpha = simulation.advance(dt, direction);
     const { ball: now, previous } = simulation;
 
@@ -93,14 +136,15 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
 
     let cameraMoving = false;
     if (!freeCamera) {
-      const c = cameraState.current;
+      const c = cameraState.current!;
       const focus = active ? cameraFocus(active) : null;
       cameraMoving = stepCamera(c, { ballX: x, ballZ: z, vx: now.vx, vz: now.vz, reducedMotion, focus }, dt);
       camera.position.set(c.px, c.py, c.pz);
       camera.lookAt(c.tx, c.ty, c.tz);
     }
 
-    const busy = cameraMoving || found.pending || speed(now) > 0 || direction.x !== 0 || direction.z !== 0;
+    const busy =
+      cameraMoving || found.pending || speed(now) > 0 || direction.x !== 0 || direction.z !== 0 || store.autopilot !== null;
     idle.current = !busy;
     if (busy) invalidate();
   });

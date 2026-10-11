@@ -1,16 +1,23 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PCFShadowMap, type Mesh } from "three";
 import { CAMERA } from "@/core/config";
 import { createSimulation, type Simulation } from "@/core/simulation";
-import { useWorldStore } from "@/state/store";
+import { gameOwnsKeyboard } from "@/core/input";
+import { useWorldStore, type MotionSetting } from "@/state/store";
 import { Ball } from "./Ball";
 import { createInputController } from "./input";
 import { Joystick } from "./Joystick";
 import { BALL } from "./layout";
-import { SPAWN } from "./landmarks";
+import { LANDMARK_BY_ID, SPAWN } from "./landmarks";
+import { ExpandedPanel } from "./ExpandedPanel";
+import { landmarkFromHash } from "./hash";
+import { Hud } from "./Hud";
+import { Onboarding } from "./Onboarding";
+import { TapBridge, type TapPicker } from "./TapBridge";
+import { usePanelHistory } from "./usePanelHistory";
 import { BOUNDS, OBSTACLES } from "./obstacles";
 import { WorldController } from "./WorldController";
 import { GroundMarkers } from "./GroundMarkers";
@@ -44,12 +51,16 @@ function DebugCamera({ values }: { values: number[] }) {
 }
 
 /** Debug builds only: `window.__world` for Playwright (SPEC §15.2). */
-function useDebugHook(simulation: Simulation) {
+function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
   const invalidate = useThree((state) => state.invalidate);
   useEffect(() => {
     if (!DEBUG) return;
     const hook = {
-      getState: () => ({ ball: { ...simulation.ball }, activeLandmarkId: useWorldStore.getState().activeLandmarkId }),
+      getState: () => {
+        const { activeLandmarkId, expandedId, autopilot, reducedMotion } = useWorldStore.getState();
+        return { ball: { ...simulation.ball }, activeLandmarkId, expandedId, autopilot, reducedMotion };
+      },
+      pick: (clientX: number, clientY: number) => pick()?.(clientX, clientY) ?? null,
       setBall: (x: number, z: number) => {
         simulation.place(x, z);
         invalidate();
@@ -59,11 +70,11 @@ function useDebugHook(simulation: Simulation) {
     return () => {
       delete (window as unknown as { __world?: typeof hook }).__world;
     };
-  }, [simulation, invalidate]);
+  }, [simulation, invalidate, pick]);
 }
 
-function DebugHook({ simulation }: { simulation: Simulation }) {
-  useDebugHook(simulation);
+function DebugHook({ simulation, pick }: { simulation: Simulation; pick: () => TapPicker | null }) {
+  useDebugHook(simulation, pick);
   return null;
 }
 
@@ -110,23 +121,97 @@ function ContextLossGuard() {
   return null;
 }
 
+const MOTION_KEY = "fp:motion";
+
+function readMotionSetting(): MotionSetting {
+  try {
+    const value = window.localStorage.getItem(MOTION_KEY);
+    return value === "reduced" || value === "full" ? value : "system";
+  } catch {
+    return "system";
+  }
+}
+
+/** Effective reduced motion: the HUD setting wins over the OS preference (SPEC §12). */
+function useMotion(): boolean {
+  const system = useReducedMotion();
+  const setting = useWorldStore((state) => state.motionSetting);
+  const setMotionSetting = useWorldStore((state) => state.setMotionSetting);
+  const setReducedMotion = useWorldStore((state) => state.setReducedMotion);
+  const effective = setting === "system" ? system : setting === "reduced";
+
+  useEffect(() => setMotionSetting(readMotionSetting()), [setMotionSetting]);
+  useEffect(() => {
+    try {
+      if (setting === "system") window.localStorage.removeItem(MOTION_KEY);
+      else window.localStorage.setItem(MOTION_KEY, setting);
+    } catch {
+      // Not remembered when storage is blocked.
+    }
+  }, [setting]);
+  useEffect(() => {
+    setReducedMotion(effective);
+    document.documentElement.classList.toggle("reduce-motion", effective);
+  }, [effective, setReducedMotion]);
+  return effective;
+}
+
 export default function World() {
   const quality = useWorldStore((state) => state.quality);
   const settings = QUALITY[quality];
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useMotion();
   const [debugCamera] = useState(readDebugCamera);
-  const [simulation] = useState(() =>
-    createSimulation({ radius: BALL.radius, obstacles: OBSTACLES, bounds: BOUNDS, spawn: { x: SPAWN[0], z: SPAWN[1] } }),
-  );
+  // Deep link (SPEC §10.6): start at that landmark with its panel open.
+  const [deepLink] = useState(() => landmarkFromHash(window.location.hash));
+  const [simulation] = useState(() => {
+    const landmark = deepLink ? LANDMARK_BY_ID.get(deepLink) : undefined;
+    const spawn = landmark ? { x: landmark.position[0], z: landmark.position[1] } : { x: SPAWN[0], z: SPAWN[1] };
+    return createSimulation({ radius: BALL.radius, obstacles: OBSTACLES, bounds: BOUNDS, spawn });
+  });
   const [input] = useState(createInputController);
   useEffect(() => () => input.dispose(), [input]);
 
   const surface = useRef<HTMLDivElement>(null);
   const ball = useRef<Mesh>(null);
   const card = useRef<HTMLDivElement>(null);
-  const setReducedMotion = useWorldStore((state) => state.setReducedMotion);
-  useEffect(() => setReducedMotion(reducedMotion), [reducedMotion, setReducedMotion]);
+  const picker = useRef<TapPicker | null>(null);
+  const expandedId = useWorldStore((state) => state.expandedId);
+  const openPanel = useWorldStore((state) => state.openPanel);
+
   useEffect(() => input.setGameSurface(surface.current), [input]);
+  useEffect(() => input.setPanelOpen(expandedId !== null), [input, expandedId]);
+  useEffect(() => {
+    if (deepLink) openPanel(deepLink);
+  }, [deepLink, openPanel]);
+  usePanelHistory();
+
+  // Enter / Space on an active landmark opens its details (routing table, SPEC §7.1).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const { activeLandmarkId, expandedId: open } = useWorldStore.getState();
+      if (!activeLandmarkId) return;
+      if (!gameOwnsKeyboard({ active: document.activeElement, gameSurface: surface.current, panelOpen: open !== null })) return;
+      event.preventDefault();
+      openPanel(activeLandmarkId);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openPanel]);
+
+  const registerPicker = useCallback((next: TapPicker | null) => {
+    picker.current = next;
+  }, []);
+  const getPicker = useCallback(() => picker.current, []);
+
+  // Tapping or clicking a landmark structure opens its details.
+  const onTap = useCallback(
+    (clientX: number, clientY: number) => {
+      const id = picker.current?.(clientX, clientY);
+      if (id) openPanel(id);
+    },
+    [openPanel],
+  );
 
   // Canvas textures draw text, so wait for the page fonts first.
   const [fontsReady, setFontsReady] = useState(false);
@@ -139,48 +224,54 @@ export default function World() {
   }, []);
 
   return (
-    <div
-      ref={surface}
-      tabIndex={0}
-      role="application"
-      aria-label="3D stadium. Use W A S D or the arrow keys, or drag, to move the ball."
-      className="game-surface relative h-full w-full touch-none select-none outline-none"
-    >
-      <Canvas
-        aria-hidden="true"
-        frameloop="demand"
-        dpr={settings.dpr}
-        shadows={settings.shadows ? { type: PCFShadowMap } : false}
-        gl={{ antialias: settings.antialias, powerPreference: "high-performance" }}
-        camera={{ position: [0, CAMERA.HEIGHT, CAMERA.DISTANCE], fov: CAMERA.FOV, near: 0.5, far: 400 }}
+    <div className="relative h-full w-full">
+      <Hud simulation={simulation} gameSurface={surface} />
+      <div
+        ref={surface}
+        tabIndex={0}
+        role="application"
+        aria-label="3D stadium. Move the ball with W A S D, the arrow keys or by dragging. Press Enter near a landmark for details."
+        className="game-surface relative h-full w-full touch-none select-none outline-none"
       >
-        <ContextLossGuard />
-        <Lighting shadows={settings.shadows} shadowMapSize={settings.shadowMapSize} />
-        {debugCamera && <DebugCamera values={debugCamera} />}
-        <DebugHook simulation={simulation} />
-        <WorldController
-          simulation={simulation}
-          input={input}
-          ball={ball}
-          reducedMotion={reducedMotion}
-          freeCamera={debugCamera !== null}
-        />
-        <PreviewTracker card={card} simulation={simulation} />
-        {fontsReady && (
-          <>
-            <Pitch pixelsPerUnit={settings.pitchPixelsPerUnit} />
-            <Goals />
-            <Stadium crowdDensity={settings.crowdDensity} />
-            <Structures />
-            <GroundMarkers />
-            <Ball ref={ball} />
-            <ReadySignal />
-          </>
-        )}
-      </Canvas>
-      <Joystick surface={surface} input={input} />
-      <PreviewCard card={card} />
-      <DiscoveryAnnouncer />
+        <Canvas
+          aria-hidden="true"
+          frameloop="demand"
+          dpr={settings.dpr}
+          shadows={settings.shadows ? { type: PCFShadowMap } : false}
+          gl={{ antialias: settings.antialias, powerPreference: "high-performance" }}
+          camera={{ position: [0, CAMERA.HEIGHT, CAMERA.DISTANCE], fov: CAMERA.FOV, near: 0.5, far: 400 }}
+        >
+          <ContextLossGuard />
+          <Lighting shadows={settings.shadows} shadowMapSize={settings.shadowMapSize} />
+          {debugCamera && <DebugCamera values={debugCamera} />}
+          <DebugHook simulation={simulation} pick={getPicker} />
+          <TapBridge register={registerPicker} />
+          <WorldController
+            simulation={simulation}
+            input={input}
+            ball={ball}
+            reducedMotion={reducedMotion}
+            freeCamera={debugCamera !== null}
+          />
+          <PreviewTracker card={card} simulation={simulation} />
+          {fontsReady && (
+            <>
+              <Pitch pixelsPerUnit={settings.pitchPixelsPerUnit} />
+              <Goals />
+              <Stadium crowdDensity={settings.crowdDensity} />
+              <Structures />
+              <GroundMarkers />
+              <Ball ref={ball} />
+              <ReadySignal />
+            </>
+          )}
+        </Canvas>
+        <Joystick surface={surface} input={input} onTap={onTap} />
+        <PreviewCard card={card} />
+        <Onboarding input={input} />
+        <DiscoveryAnnouncer />
+      </div>
+      <ExpandedPanel returnFocus={surface} />
     </div>
   );
 }

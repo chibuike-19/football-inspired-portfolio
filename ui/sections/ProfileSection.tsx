@@ -48,29 +48,38 @@ export function ProfileSection() {
         </div>
       </div>
 
-      <div className="relative mx-auto grid max-w-5xl gap-10 px-5 pb-8 md:grid-cols-[1.4fr_1fr]">
-        <div>
-          <h2 className="font-display text-2xl font-bold uppercase tracking-wide">About</h2>
-          <div className="mt-3 space-y-4 leading-relaxed text-muted">
-            {profile.bio.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h2 className="font-display text-2xl font-bold uppercase tracking-wide">Skills</h2>
-          <dl className="mt-3 space-y-4">
-            {profile.skills.map((group) => (
-              <div key={group.group}>
-                <dt className="mb-2 text-sm font-semibold text-text">{group.group}</dt>
-                <dd>
-                  <TagList items={group.items} label={group.group} />
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+      <div className="relative mx-auto max-w-5xl px-5 pb-8">
+        <ProfileAbout />
       </div>
     </section>
+  );
+}
+
+/** Bio and skills. `compact` stacks them for narrow containers (the detail panel). */
+export function ProfileAbout({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={compact ? "grid gap-8" : "grid gap-10 md:grid-cols-[1.4fr_1fr]"}>
+      <div>
+        <h2 className="font-display text-2xl font-bold uppercase tracking-wide">About</h2>
+        <div className="mt-3 space-y-4 leading-relaxed text-muted">
+          {profile.bio.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h2 className="font-display text-2xl font-bold uppercase tracking-wide">Skills</h2>
+        <dl className="mt-3 space-y-4">
+          {profile.skills.map((group) => (
+            <div key={group.group}>
+              <dt className="mb-2 text-sm font-semibold text-text">{group.group}</dt>
+              <dd>
+                <TagList items={group.items} label={group.group} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
   );
 }

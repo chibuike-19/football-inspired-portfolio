@@ -7,6 +7,7 @@ import { damp } from "@/core/math";
 import { chooseCardPosition, type Placement } from "@/core/placement";
 import type { Simulation } from "@/core/simulation";
 import { useWorldStore } from "@/state/store";
+import { ArrowRight } from "@/ui/icons";
 import { LandmarkPreview, previewAnnouncement } from "@/ui/LandmarkPreview";
 import { LANDMARK_BY_ID } from "./landmarks";
 import { BALL } from "./layout";
@@ -122,7 +123,24 @@ export function PreviewCard({ card }: { card: RefObject<HTMLDivElement | null> }
       className="preview-card"
       hidden={!shownId}
     >
-      {shownId && <LandmarkPreview id={shownId} />}
+      {shownId && (
+        <>
+          <LandmarkPreview id={shownId} />
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
+            <button
+              type="button"
+              onClick={() => useWorldStore.getState().openPanel(shownId)}
+              className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+            >
+              More details<span className="sr-only"> about {LANDMARK_BY_ID.get(shownId)?.title}</span>
+              <ArrowRight className="size-4" />
+            </button>
+            <span className="hidden text-xs text-muted md:inline">
+              or press <kbd>Enter</kbd>
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

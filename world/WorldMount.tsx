@@ -4,11 +4,16 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorldStore } from "@/state/store";
 import { buttonStyles } from "@/ui/primitives";
-import { profile } from "@/content/profile";
 import { classicReason, initialQuality, writeViewPreference } from "./capability";
 import { WorldErrorBoundary } from "./WorldErrorBoundary";
 
 const World = dynamic(() => import("./World"), { ssr: false });
+
+/**
+ * Hashes the world can open (SPEC §10.6). A cheap pattern so the initial
+ * bundle doesn't pull in the landmark data; World validates the exact id.
+ */
+const LANDMARK_HASH = /^#(profile|experience|resume|contact|project\/[a-z0-9-]+)$/;
 
 /** SPEC §11.3: reveal Classic view if the world isn't ready in time. */
 const LOAD_TIMEOUT_MS = 15_000;
@@ -34,8 +39,8 @@ export function WorldMount() {
     const hardBlocked = reason === "webgl2-unavailable" || reason === "save-data";
     setCapable(!hardBlocked);
     setQuality(initialQuality());
-    // Deep links open Classic view until world deep-linking lands (Phase 6).
-    if (reason || window.location.hash) return;
+    // Landmark deep links open in the world; any other hash (e.g. #main) means "show me the page".
+    if (reason || (window.location.hash && !LANDMARK_HASH.test(window.location.hash))) return;
     setMode("world");
     setStatus("loading");
   }, [setCapable, setMode, setQuality, setStatus]);
@@ -70,11 +75,6 @@ export function WorldMount() {
     window.scrollTo(0, 0);
   }, [setMode, setReadyLate, setStatus, status]);
 
-  const enterClassic = useCallback(() => {
-    writeViewPreference("classic");
-    setMode("classic");
-  }, [setMode]);
-
   // Keyboard users who tab into the hidden page, or use the skip link, get Classic view.
   useEffect(() => {
     if (!active) return;
@@ -95,18 +95,6 @@ export function WorldMount() {
 
   return (
     <>
-      {/* Interim world chrome; the full HUD replaces it in Phase 6. Before the stage in the DOM so Tab reaches "Classic view" first. */}
-      {active && (
-        <div className="fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
-          <p className="font-display text-lg font-bold uppercase tracking-wide text-white drop-shadow">
-            {profile.name}
-          </p>
-          <button type="button" onClick={enterClassic} className={buttonStyles.secondary}>
-            Classic view
-          </button>
-        </div>
-      )}
-
       {loadWorld && (
         <div className="world-stage" data-state={active ? "active" : "hidden"} aria-hidden={!active}>
           <WorldErrorBoundary onError={() => fail("render-error")}>

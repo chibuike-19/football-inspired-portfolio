@@ -70,3 +70,14 @@ export const FOCUS = {
   ZOOM: 0.12,
   LAMBDA: 2.5,
 } as const;
+
+/** Menu navigation: the ball dribbles itself to a landmark (SPEC §7.5). */
+export const AUTOPILOT = {
+  /** Within this distance of the target the ball eases off. */
+  SLOW_RADIUS: 5,
+  /** Arrived: close enough and nearly stopped. */
+  ARRIVE_RADIUS: 0.6,
+  ARRIVE_SPEED: 0.6,
+  /** Give up after this long (e.g. something blocks the way). */
+  TIMEOUT: 8,
+} as const;

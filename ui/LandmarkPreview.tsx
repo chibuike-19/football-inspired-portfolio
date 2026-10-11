@@ -1,6 +1,6 @@
 import { contact, experience, getProject, profile } from "@/content";
 import { formatRange } from "@/lib/format";
-import { ArrowRight, Download, FileText, GitHub, LinkedIn, Mail } from "./icons";
+import { Download, FileText, GitHub, LinkedIn, Mail } from "./icons";
 import { buttonStyles, LinkButton, TagList } from "./primitives";
 
 /** Concise first-look content for each landmark (SPEC §10.2). */
@@ -39,9 +39,7 @@ function ExperiencePreview() {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-muted">
-        Plus {experience.length - 2} earlier roles in the full experience list.
-      </p>
+      <p className="mt-3 text-xs text-muted">Plus {experience.length - 2} earlier roles in the details.</p>
     </>
   );
 }
@@ -63,12 +61,6 @@ function ProjectPreview({ slug }: { slug: string }) {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {primary && <LinkButton link={{ ...primary, note: undefined }} variant="primary" />}
         {primary?.note && <span className="text-xs text-muted">{primary.note}</span>}
-        <a
-          href={`/projects/${project.slug}/`}
-          className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
-        >
-          Details<span className="sr-only"> about {project.name}</span> <ArrowRight className="size-4" />
-        </a>
       </div>
     </>
   );
