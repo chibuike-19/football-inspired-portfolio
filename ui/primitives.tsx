@@ -71,7 +71,7 @@ export function LinkButton({
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
     >
       {link.label}
-      {link.note && <span className="normal-case tracking-normal opacity-70">· {link.note}</span>}
+      {link.note && <span className="normal-case tracking-normal">· {link.note}</span>}
       {external && <ArrowUpRight className="size-4" />}
       {external && <span className="sr-only">(opens in a new tab)</span>}
     </a>

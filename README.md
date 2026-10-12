@@ -2,7 +2,7 @@
 
 A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-**Status:** Scroll-driven journey, step 1 of 6. The classic page is the default; "Explore in 3D" opens a guided, scroll-driven story through the stadium (Kickoff → Player → Playbook → Highlights → Journey → Trophies → Full Time). Free play (driving the ball) remains available from the journey menu. The tunnel interior and trophy room arrive in steps 4–5.
+**Status:** Complete. The classic page is the default; "Explore in 3D" opens a guided, scroll-driven story through the stadium (Kickoff → Player → Playbook → Highlights → the players' tunnel → the trophy room → Full Time). Free play (driving the ball) is available from the journey menu.
 
 ## Run
 
@@ -10,7 +10,9 @@ A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the
 npm install
 npm run dev        # http://localhost:3000
 npm run build      # static export to ./out
-npm test           # Vitest
+npm test           # Vitest (unit)
+npm run test:e2e   # debug build + Playwright browser tests (uses installed Google Chrome)
+npm run e2e        # Playwright only, against the existing build in out/
 npm run lint
 npm run typecheck  # run after a build or dev start (Next generates route types)
 ```
@@ -37,6 +39,12 @@ All feel-related numbers (speed, acceleration, friction, camera height and dista
 - Trophy cabinet content: `content/trophies.ts`. Playbook "Starting XI": `content/playbook.ts` (skills) and `world/journey/formation.ts` (positions).
 
 To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `setExperience("journey" | "freeplay")`, `pick(clientX, clientY)`, `renderer()`) for browser tests, and accept `?quality=high|medium|low` to force a tier. All of this is compiled out of normal builds.
+
+## Tests
+
+- **Unit (Vitest, `tests/core`, `tests/content`, `tests/world`, `tests/state`):** movement, collisions, camera, discovery, journey planning (routes through openings, timing), content integrity.
+- **Browser (Playwright, `tests/e2e`):** classic page and fallbacks, the full journey (every chapter, scroll forward/back, direct jumps, interrupts, replay), camera never passing through walls (sampled every frame), free play, reduced motion, phones.
+- `npm run test:e2e` builds with `NEXT_PUBLIC_WORLD_DEBUG=1` (exposes `window.__world` for the tests). Run `npm run build` afterwards before deploying, so the debug hooks are not shipped.
 
 ## Deploy
 

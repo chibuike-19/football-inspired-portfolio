@@ -549,9 +549,15 @@ html.world-active .island-wrap {
 }
 
 /* Sections fade up as they scroll into view, where supported (no JS). */
+/* Slide only (no fade), so text below the fold always has full contrast. */
+@keyframes rise {
+  from { transform: translateY(24px); }
+  to { transform: none; }
+}
+
 @supports (animation-timeline: view()) {
   main > section:not(.hero) {
-    animation: fade-rise linear both;
+    animation: rise linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 35%;
   }
