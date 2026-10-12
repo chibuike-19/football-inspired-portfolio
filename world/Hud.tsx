@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { profile } from "@/content/profile";
 import type { Simulation } from "@/core/simulation";
@@ -102,9 +103,7 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
   return (
     <header className="hud" data-ui>
       <button type="button" onClick={() => go("explore")} className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-white">
-        <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-accent text-sm text-accent-ink">
-          EO
-        </span>
+        <Image src={profile.avatar} alt="" width={64} height={64} className="size-8 rounded-full object-cover ring-[1.5px] ring-brand" />
         <span className="hidden lg:inline">{profile.name}</span>
         <span className="sr-only lg:hidden">{profile.name}: back to the centre circle</span>
       </button>
@@ -118,6 +117,9 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
         </ul>
       </nav>
       <div className="hud-panel hidden items-center gap-1 md:flex">
+        <a href="/blog/" className="hud-link">
+          Blog
+        </a>
         <button type="button" onClick={toggleMotion} aria-pressed={reducedMotion} className="hud-link">
           Reduce motion
         </button>
@@ -148,6 +150,11 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
             {NAV.map((item) => (
               <li key={item.id}>{navButton(item, "w-full justify-start text-base")}</li>
             ))}
+            <li>
+              <a href="/blog/" className="hud-link w-full justify-start text-base">
+                Blog
+              </a>
+            </li>
             <li className="mt-1 border-t border-line pt-2">
               <button type="button" onClick={toggleMotion} aria-pressed={reducedMotion} className="hud-link w-full justify-start text-base">
                 Reduce motion: {reducedMotion ? "on" : "off"}

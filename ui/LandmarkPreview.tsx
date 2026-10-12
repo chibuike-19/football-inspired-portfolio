@@ -1,5 +1,6 @@
 import { contact, experience, getProject, profile } from "@/content";
 import { formatRange } from "@/lib/format";
+import { kindLabel } from "@/lib/project";
 import { Download, FileText, GitHub, LinkedIn, Mail } from "./icons";
 import { buttonStyles, LinkButton, TagList } from "./primitives";
 
@@ -50,9 +51,10 @@ function ProjectPreview({ slug }: { slug: string }) {
   const [primary] = project.links;
   return (
     <>
-      <p className={kicker}>{project.kind === "open-source" ? "Open source" : "Product"}</p>
+      <p className={kicker}>{kindLabel(project)}</p>
       <h2 className={title}>{project.name}</h2>
       {project.context && <p className="mt-1 text-xs font-semibold text-muted">{project.context}</p>}
+      {project.badge && <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-accent">★ {project.badge}</p>}
       <p className="mt-2 text-sm leading-relaxed text-text/90">{project.oneLiner}</p>
       <p className="mt-2 text-sm leading-snug text-muted">{project.contribution[0]}</p>
       <div className="mt-3">
@@ -61,6 +63,7 @@ function ProjectPreview({ slug }: { slug: string }) {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {primary && <LinkButton link={{ ...primary, note: undefined }} variant="primary" />}
         {primary?.note && <span className="text-xs text-muted">{primary.note}</span>}
+        {!primary && project.access && <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">🔒 {project.access}</span>}
       </div>
     </>
   );

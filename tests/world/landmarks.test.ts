@@ -56,7 +56,8 @@ describe("landmark layout", () => {
     }
   });
 
-  it("all landmarks are a short roll from spawn (≤ 30 units)", () => {
-    for (const { id, position } of LANDMARKS) expect(distance(position, [0, 0]), id).toBeLessThanOrEqual(30);
+  // ≤ 32 units ≈ 3.5 s at full speed; six boards push the outer pair to ~31.
+  it("all landmarks are a short roll from spawn (≤ 32 units)", () => {
+    for (const { id, position } of LANDMARKS) expect(distance(position, [0, 0]), id).toBeLessThanOrEqual(32);
   });
 });

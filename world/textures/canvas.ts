@@ -7,15 +7,15 @@ function fontFamily(variable: string, fallback: string): string {
 }
 
 export const fonts = {
-  display: () => fontFamily("--font-barlow", "'Arial Narrow', sans-serif"),
-  body: () => fontFamily("--font-inter", "system-ui, sans-serif"),
+  display: () => fontFamily("--font-iceland", "'Arial Narrow', sans-serif"),
+  body: () => fontFamily("--font-geist", "system-ui, sans-serif"),
 };
 
 /** Resolves once the page fonts used by canvas textures are ready. */
 export async function loadCanvasFonts(): Promise<void> {
   if (!("fonts" in document)) return;
   await Promise.all([
-    document.fonts.load(`700 64px ${fonts.display()}`),
+    document.fonts.load(`400 64px ${fonts.display()}`),
     document.fonts.load(`600 64px ${fonts.body()}`),
   ]).catch(() => undefined);
 }

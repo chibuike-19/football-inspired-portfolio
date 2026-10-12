@@ -20,8 +20,8 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "flex-end",
           padding: 72,
-          background: "linear-gradient(135deg, #0b0f0d 0%, #123a22 60%, #1f7a3e 100%)",
-          color: "#f3f5f4",
+          background: "radial-gradient(60% 70% at 30% 40%, rgba(99,102,241,0.35), rgba(11,15,25,0) 70%), #0b0f19",
+          color: "#f1f5f9",
           position: "relative",
         }}
       >
@@ -33,15 +33,15 @@ export default function OpengraphImage() {
             width: 400,
             height: 400,
             borderRadius: 400,
-            border: "6px solid rgba(255,255,255,0.18)",
+            border: "6px solid rgba(129,140,248,0.35)",
           }}
         />
-        <div style={{ fontSize: 28, color: "#f5b544", letterSpacing: 6, textTransform: "uppercase" }}>
+        <div style={{ fontSize: 28, color: "#818cf8", letterSpacing: 6, textTransform: "uppercase" }}>
           {profile.location}
         </div>
         <div style={{ fontSize: 96, fontWeight: 700, lineHeight: 1, marginTop: 12 }}>{profile.name}</div>
-        <div style={{ fontSize: 40, marginTop: 20, color: "#d8dedb" }}>{profile.headline}</div>
-        <div style={{ fontSize: 28, marginTop: 28, color: "#9aa6a0" }}>{profile.strengths.slice(0, 3).join("  ·  ")}</div>
+        <div style={{ fontSize: 40, marginTop: 20, color: "#c7d2fe" }}>{profile.headline}</div>
+        <div style={{ fontSize: 28, marginTop: 28, color: "#94a3b8" }}>{profile.strengths.slice(0, 3).join("  ·  ")}</div>
       </div>
     ),
     size,

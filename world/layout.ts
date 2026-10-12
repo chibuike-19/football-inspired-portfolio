@@ -46,7 +46,7 @@ export const STAND = {
 } as const;
 
 export const BOARD = {
-  width: 9,
+  width: 7,
   height: 1.1,
   /** Distance of the board line beyond the touchline. */
   offset: 1.8,

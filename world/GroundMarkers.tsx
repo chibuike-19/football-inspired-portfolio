@@ -13,16 +13,16 @@ function createRingTexture() {
   const { canvas, ctx } = createCanvas(size, size);
   const c = size / 2;
   const gradient = ctx.createRadialGradient(c, c, c * 0.55, c, c, c);
-  // Warm white with a hint of the amber accent: reads on turf without going neon.
-  gradient.addColorStop(0, "rgba(255, 236, 200, 0)");
-  gradient.addColorStop(0.58, "rgba(255, 236, 200, 0.95)");
-  gradient.addColorStop(0.72, "rgba(255, 214, 150, 0.35)");
-  gradient.addColorStop(1, "rgba(255, 214, 150, 0)");
+  // Cool white with a hint of the indigo accent: reads on turf without going neon.
+  gradient.addColorStop(0, "rgba(224, 231, 255, 0)");
+  gradient.addColorStop(0.58, "rgba(224, 231, 255, 0.95)");
+  gradient.addColorStop(0.72, "rgba(165, 180, 252, 0.4)");
+  gradient.addColorStop(1, "rgba(165, 180, 252, 0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   const inner = ctx.createRadialGradient(c, c, 0, c, c, c * 0.6);
-  inner.addColorStop(0, "rgba(255, 236, 200, 0.14)");
-  inner.addColorStop(1, "rgba(255, 236, 200, 0)");
+  inner.addColorStop(0, "rgba(224, 231, 255, 0.14)");
+  inner.addColorStop(1, "rgba(224, 231, 255, 0)");
   ctx.fillStyle = inner;
   ctx.fillRect(0, 0, size, size);
   return toTexture(canvas, 4);

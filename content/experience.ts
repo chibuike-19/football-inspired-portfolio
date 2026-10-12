@@ -27,15 +27,19 @@ export const experience: Experience[] = [
     company: "Rova",
     positions: [{ title: "Senior Frontend Developer", start: "2025-03", end: "2026-04" }],
     location: "London, UK · Remote",
-    summary: "Core Banking team on a corporate internet banking platform used by First City Monument Bank and other enterprise clients.",
+    client: "FCMB Group",
+    summary:
+      "Core Banking team. Built three corporate banking products for FCMB Group: the Business Online web platform, its React Native mobile app and the admin portal behind them.",
     highlights: [
-      "Built admin-portal features for a corporate internet banking platform used by First City Monument Bank and other enterprise clients.",
-      "Developed transfer and multi-level transaction approval flows with backend (Java/SQL) and DevOps (Docker, AWS) teams to meet banking security and compliance requirements.",
-      "Implemented audit-logging UI and role-based access control (RBAC) across the enterprise client base.",
+      "Single-handedly built the corporate banking admin portal: business accounts, corporate onboarding, staff administration, single and bulk transaction approvals, session management and account locking, unlocking and flagging.",
+      "Implemented maker-checker authorization for sensitive administrative actions and granular RBAC across 12+ administrative roles with distinct read and write permissions, plus comprehensive audit logging.",
+      "Built FCMB Business Online, the corporate internet banking web platform: accounts, payments, beneficiaries, transaction authorization and multi-level approvals.",
+      "Built the React Native mobile banking app for corporate customers: account management, transaction initiation and authorization with approval hierarchies.",
+      "Worked with backend (Java/SQL) and DevOps (Docker, AWS) teams to meet banking security and compliance requirements.",
       "Practised test-driven development with 85%+ coverage enforced through SonarQube.",
       "Led code reviews for 5 engineers, wrote the review checklist the team adopted and set up GitHub Actions on every pull request.",
     ],
-    tags: ["React", "RBAC", "TDD", "SonarQube", "GitHub Actions"],
+    tags: ["React", "React Native", "Maker-checker", "RBAC", "TDD", "GitHub Actions"],
     projectSlug: "fcmb-business-online",
   },
   {
@@ -64,13 +68,5 @@ export const experience: Experience[] = [
       "Mentored 50+ engineers.",
     ],
     tags: ["Python", "NLP", "SQL"],
-  },
-  {
-    id: "kam-holding",
-    company: "KAM Holding",
-    positions: [{ title: "Software Developer", start: "2023-07", end: "2023-11" }],
-    location: "Lagos, Nigeria",
-    highlights: [],
-    tags: [],
   },
 ];

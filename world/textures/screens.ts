@@ -1,15 +1,17 @@
 import type { Project } from "@/content/types";
+import { BOARD } from "../layout";
 import { createCanvas, fitText, fonts, toTexture, wrapText } from "./canvas";
 
 /** LED perimeter board: project name, one-liner and an accent band. */
 export function createBoardTexture(project: Project) {
-  const W = 2048;
+  // Match the board's physical aspect ratio so text isn't stretched.
   const H = 250;
+  const W = Math.round((H * (BOARD.width - 0.08)) / (BOARD.height - 0.08));
   const { canvas, ctx } = createCanvas(W, H);
 
   const gradient = ctx.createLinearGradient(0, 0, W, 0);
-  gradient.addColorStop(0, "#0d1110");
-  gradient.addColorStop(1, "#151b18");
+  gradient.addColorStop(0, "#0b0f19");
+  gradient.addColorStop(1, "#141b2d");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
 
@@ -22,20 +24,21 @@ export function createBoardTexture(project: Project) {
   ctx.globalAlpha = 1;
 
   const left = 90;
-  const display = (size: number) => `700 ${size}px ${fonts.display()}`;
+  const display = (size: number) => `400 ${size}px ${fonts.display()}`;
   const body = (size: number) => `500 ${size}px ${fonts.body()}`;
 
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  fitText(ctx, project.name.toUpperCase(), 820, 150, display);
+  fitText(ctx, project.name.toUpperCase(), W * 0.42, 150, display);
   ctx.fillText(project.name.toUpperCase(), left, H / 2 + 6);
 
   ctx.font = body(46);
   ctx.fillStyle = "rgba(255,255,255,0.78)";
-  const lines = wrapText(ctx, project.oneLiner, 980, 2);
+  const textLeft = W * 0.5;
+  const lines = wrapText(ctx, project.oneLiner, W * 0.47, 2);
   const lineHeight = 60;
   const top = H / 2 - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, i) => ctx.fillText(line, 990, top + i * lineHeight));
+  lines.forEach((line, i) => ctx.fillText(line, textLeft, top + i * lineHeight));
 
   // LED pixel grid.
   ctx.fillStyle = "rgba(0,0,0,0.22)";
@@ -54,22 +57,22 @@ export function createScreenTexture(options: {
   lines?: string[];
   accent?: string;
 }) {
-  const { width: W, height: H, kicker, title, lines = [], accent = "#f5b544" } = options;
+  const { width: W, height: H, kicker, title, lines = [], accent = "#818cf8" } = options;
   const { canvas, ctx } = createCanvas(W, H);
 
   const gradient = ctx.createLinearGradient(0, 0, 0, H);
-  gradient.addColorStop(0, "#0f1513");
-  gradient.addColorStop(1, "#090c0b");
+  gradient.addColorStop(0, "#111726");
+  gradient.addColorStop(1, "#0b0f19");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
 
   const pad = W * 0.06;
-  const display = (size: number) => `700 ${size}px ${fonts.display()}`;
+  const display = (size: number) => `400 ${size}px ${fonts.display()}`;
   const body = (size: number) => `500 ${size}px ${fonts.body()}`;
 
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = accent;
-  ctx.font = `700 ${Math.round(H * 0.075)}px ${fonts.display()}`;
+  ctx.font = `400 ${Math.round(H * 0.075)}px ${fonts.display()}`;
   ctx.letterSpacing = `${Math.round(H * 0.012)}px`;
   ctx.fillText(kicker.toUpperCase(), pad, H * 0.22);
   ctx.letterSpacing = "0px";

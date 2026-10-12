@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorldStore } from "@/state/store";
-import { buttonStyles } from "@/ui/primitives";
 import { classicReason, initialQuality, writeViewPreference } from "./capability";
 import { WorldErrorBoundary } from "./WorldErrorBoundary";
 
@@ -114,8 +113,9 @@ export function WorldMount() {
         <button
           type="button"
           onClick={enterWorld}
-          className={`${buttonStyles.primary} fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 z-30 shadow-lg shadow-black/40`}
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-30 inline-flex min-h-11 items-center gap-2 rounded-full border border-brand/50 bg-surface/90 px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-text shadow-[0_10px_30px_-10px_var(--color-brand)] backdrop-blur transition-colors hover:border-accent"
         >
+          <span aria-hidden="true" className="live-dot" />
           {readyLate ? "3D stadium ready: enter" : "Explore in 3D"}
         </button>
       )}

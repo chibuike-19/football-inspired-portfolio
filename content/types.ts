@@ -16,8 +16,22 @@ export interface SkillGroup {
   items: string[];
 }
 
+/** A verified number for the hero strip, e.g. { value: "85%+", label: "test coverage" }. */
+export interface Signal {
+  value: string;
+  label: string;
+}
+
+export interface Capability {
+  title: string;
+  summary: string;
+  items: string[];
+}
+
 export interface Profile {
   name: string;
+  /** Square photo in /public, used for the nav mark, hero and favicon. */
+  avatar: string;
   headline: string;
   subheadline: string;
   location: string;
@@ -27,6 +41,14 @@ export interface Profile {
   bio: string[];
   /** Short list shown on the scoreboard. */
   strengths: string[];
+  /** One-line status shown above the hero heading. */
+  status: string;
+  /** Verified numbers from shipped work (sources in CONTENT.md). */
+  signals: Signal[];
+  /** Stack nodes drawn around the monogram in the hero. */
+  stackGraph: string[];
+  /** What I do, grouped; each item is backed by the résumé or LinkedIn. */
+  capabilities: Capability[];
   skills: SkillGroup[];
   certifications: string[];
   languages: { name: string; level: string }[];
@@ -45,6 +67,8 @@ export interface Experience {
   /** Most recent position first. */
   positions: Position[];
   location: string;
+  /** Main client served in this role, e.g. "FCMB Group". */
+  client?: string;
   summary?: string;
   highlights: string[];
   tags: string[];
@@ -55,14 +79,21 @@ export interface Experience {
 export interface Project {
   slug: string;
   name: string;
-  kind: "product" | "open-source";
+  kind: "product" | "open-source" | "website";
+  /** Shown as a wide "featured" module on the classic page (shipped products, co-founded work). */
+  featured?: boolean;
   /** e.g. "Built at Rova". */
   context?: string;
   oneLiner: string;
   problem: string;
   contribution: string[];
   tech: string[];
+  /** May be empty for internal or private products; then `access` explains why. */
   links: ExternalLink[];
+  /** Shown instead of a link when the product isn't publicly reachable. */
+  access?: string;
+  /** e.g. "Built single-handedly": shown as a badge. */
+  badge?: string;
   /** Board accent colour (hex). */
   accent: string;
   /** Id of the related experience entry, if any. */

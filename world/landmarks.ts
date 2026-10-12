@@ -49,30 +49,64 @@ const northBoardZ = -(PITCH.halfWidth + BOARD.offset);
 /**
  * Project boards along the north touchline in two groups, leaving the centre
  * for the technical area. The camera always faces north, so everything on this
- * side reads head-on.
+ * side reads head-on. Spacing equals two activation radii, so zones never overlap.
  */
-const BOARD_SPACING = 11;
+const BOARD_GAP = 10; // centre line to the first board on each side
+const BOARD_SPACING = 2 * DISCOVERY.DEFAULT_ACTIVE_RADIUS;
 function boardX(index: number, count: number): number {
   const leftCount = Math.ceil(count / 2);
-  return index < leftCount ? -BOARD_SPACING * (leftCount - index) : BOARD_SPACING * (index - leftCount + 1);
+  return index < leftCount
+    ? -(BOARD_GAP + (leftCount - 1 - index) * BOARD_SPACING)
+    : BOARD_GAP + (index - leftCount) * BOARD_SPACING;
 }
 
-const boards: LandmarkDef[] = projects.map((project, index) => {
-  const x = boardX(index, projects.length);
-  return {
-    id: `project:${project.slug}`,
-    kind: "board",
-    position: [x, -PITCH.halfWidth + 2.5],
-    structure: [x, 0, northBoardZ],
-    rotation: 0,
-    anchor: [x, BOARD.height + 0.4, northBoardZ],
-    extent: [BOARD.width / 2, BOARD.height + 0.4],
+/** The north touchline fits this many boards with non-overlapping activation zones. */
+export const NORTH_BOARD_SLOTS = 6;
+
+/**
+ * Overflow boards stand at the ends beside the goals, opposite the contact kiosk
+ * (west) and the tunnel (east), turned towards the camera.
+ */
+const END_SLOTS: { side: -1 | 1; z: number }[] = [
+  { side: -1, z: -(GOAL.halfWidth + 4.8) },
+  { side: 1, z: GOAL.halfWidth + 4.8 },
+];
+
+const northProjects = projects.slice(0, NORTH_BOARD_SLOTS);
+
+const boards: LandmarkDef[] = projects.map((project, index): LandmarkDef => {
+  const shared = {
+    id: `project:${project.slug}` as const,
+    kind: "board" as const,
+    extent: [BOARD.width / 2, BOARD.height + 0.4] as const,
     contentId: project.slug,
     title: project.name,
-    preview: "anchor",
+    preview: "anchor" as const,
     nearRadius: 6,
     activeRadius: DISCOVERY.DEFAULT_ACTIVE_RADIUS,
     priority: 1,
+  };
+  if (index < NORTH_BOARD_SLOTS) {
+    const x = boardX(index, northProjects.length);
+    return {
+      ...shared,
+      position: [x, -PITCH.halfWidth + 2.5],
+      structure: [x, 0, northBoardZ],
+      rotation: 0,
+      anchor: [x, BOARD.height + 0.4, northBoardZ],
+    };
+  }
+  const slot = END_SLOTS[index - NORTH_BOARD_SLOTS];
+  if (!slot) throw new Error(`No stadium slot for project board ${project.slug}: add a slot in world/landmarks.ts`);
+  const x = slot.side * (PITCH.halfLength + GOAL.depth + 1.6);
+  const position: Vec2 = [slot.side * (PITCH.halfLength - 4), slot.z];
+  const structure: Vec3 = [x, 0, slot.z];
+  return {
+    ...shared,
+    position,
+    structure,
+    rotation: yawTowardsCamera(structure, position),
+    anchor: [x, BOARD.height + 0.4, slot.z],
   };
 });
 

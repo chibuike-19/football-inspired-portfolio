@@ -43,13 +43,17 @@ The build is fully static (`output: "export"`). Deploy `out/` to any static host
 
 Set **`NEXT_PUBLIC_SITE_URL`** to the final domain at build time (e.g. `https://emmanuelobiechina.dev`). It is used for canonical URLs, Open Graph tags, the sitemap and robots.txt. Without it they point at `http://localhost:3000`.
 
+## Look and feel
+
+Colour tokens and fonts are defined once in `app/globals.css` (`@theme`) and `app/layout.tsx`. The classic page, the 3D HUD, cards and panels all read the same tokens. SPEC §5.2 records the palette, type and layout decisions.
+
 ## Editing content
 
 All portfolio content is typed data in `content/`. No component contains portfolio text.
 
 | File | What it holds |
 |---|---|
-| `content/profile.ts` | Name, headline, intro, bio, strengths, skills, certifications, languages |
+| `content/profile.ts` | Name, headline, intro, status line, signals, stack graph, capabilities, bio, skills, certifications, languages |
 | `content/experience.ts` | Roles (ordered by end date, current first) |
 | `content/projects.ts` | Project boards: copy, links and board accent colour |
 | `content/links.ts` | Email, GitHub, LinkedIn, résumé path |

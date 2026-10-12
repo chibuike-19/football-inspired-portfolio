@@ -7,6 +7,7 @@ import { ExperienceSection } from "@/ui/sections/ExperienceSection";
 import { ProfileSection } from "@/ui/sections/ProfileSection";
 import { ProjectsSection } from "@/ui/sections/ProjectsSection";
 import { ResumeSection } from "@/ui/sections/ResumeSection";
+import { StackSection } from "@/ui/sections/StackSection";
 
 const personJsonLd = {
   "@context": "https://schema.org",
@@ -34,12 +35,14 @@ export default function Home() {
         <SiteHeader />
         <main id="main">
           <ProfileSection />
-          <ExperienceSection />
           <ProjectsSection />
+          <ExperienceSection />
+          <StackSection />
           <ResumeSection />
           <ContactSection />
         </main>
         <SiteFooter />
+        <div aria-hidden="true" className="grain" />
       </div>
       <script
         type="application/ld+json"

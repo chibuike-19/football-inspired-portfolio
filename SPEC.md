@@ -159,6 +159,14 @@ camera)                                                           │
 - A soft ring on the turf marks each landmark's spot; it brightens as the ball approaches.
 
 ### 5.2 Art direction
+
+**Revised 2026-10-12 (owner request): "system console" look for a senior engineer.**
+- Palette: navy `#0B0F19` background, `#F1F5F9` text, indigo `#6366F1` brand accent (glows, borders, fills) with its tint `#818CF8` for small accent text and button fills, because `#6366F1` on navy is 4.3:1 and fails WCAG AA for small text. Pitch greens remain in the 3D scene only.
+- Type: Iceland (display: name, headings, nav, labels), Geist (body), Geist Mono (terminal-style tags).
+- Classic layout follows tobysolutions.dev / capeodev.com: hero with status line, system graph and signals; featured work modules with spec sheets; experience log; stack and practice; résumé; "initiate connection".
+- Hero background: 64 px blueprint grid, slow-drifting aurora, film-grain overlay. Navigation is a "Dynamic Island" (after useaccrue.com): wide at the top, a compact floating pill with a live section status once scrolled, expanding into a menu on phones.
+
+**Original direction (superseded):**
 - Palette: rich pitch greens, charcoal/near-black stadium, white typography, **one** restrained accent color (proposed: warm amber `#F5B544`, final choice in Phase 2) used only for interactive emphasis.
 - Stylized-realistic, not photoreal.
 - Landmarks become prominent through purposeful light, contrast and motion when `near` or `active`. Nothing glows constantly.

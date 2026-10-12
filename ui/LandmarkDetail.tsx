@@ -1,4 +1,5 @@
 import { experience, getProject, profile } from "@/content";
+import { kindLabel } from "@/lib/project";
 import { ArrowRight } from "./icons";
 import { ContactList } from "./sections/ContactSection";
 import { ExperienceEntry } from "./sections/ExperienceSection";
@@ -14,7 +15,7 @@ export function landmarkDetailTitle(id: string): { kicker: string; title: string
   if (id === "resume") return { kicker: "Players' tunnel", title: "Résumé" };
   if (id === "contact") return { kicker: "Goal-side terminal", title: "Contact" };
   const project = id.startsWith("project:") ? getProject(id.slice("project:".length)) : undefined;
-  return { kicker: project?.kind === "open-source" ? "Open source" : "Project", title: project?.name ?? "" };
+  return { kicker: project ? kindLabel(project) : "Project", title: project?.name ?? "" };
 }
 
 export function LandmarkDetail({ id }: { id: string }) {

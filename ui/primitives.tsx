@@ -4,7 +4,7 @@ import { ArrowUpRight } from "./icons";
 
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <li className="rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted">
+    <li className="border border-line bg-surface-2/60 px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted">
       {children}
     </li>
   );
@@ -21,23 +21,36 @@ export function TagList({ items, label }: { items: string[]; label: string }) {
   );
 }
 
-export function SectionHeading({ id, kicker, title }: { id: string; kicker: string; title: string }) {
+/** Small bracketed system label, e.g. [WORK_01]. Decorative. */
+export function SystemLabel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className="mb-8">
-      <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-accent">{kicker}</p>
-      <h2 id={id} className="mt-1 font-display text-4xl font-bold uppercase tracking-wide sm:text-5xl">
+    <span aria-hidden="true" className={`font-mono text-[11px] uppercase tracking-[0.18em] text-muted ${className}`}>
+      [{children}]
+    </span>
+  );
+}
+
+/** Section heading: ">_ Title" with a system label on the right. */
+export function SectionHeading({ id, title, label }: { id: string; title: string; label: string }) {
+  return (
+    <div className="mb-10 flex items-end justify-between gap-6 border-b border-line pb-5">
+      <h2 id={id} className="flex items-baseline gap-3 font-display text-4xl leading-none tracking-wide sm:text-5xl">
+        <span aria-hidden="true" className="font-mono text-2xl text-accent sm:text-3xl">
+          &gt;_
+        </span>
         {title}
       </h2>
+      <SystemLabel className="hidden pb-1 sm:inline">{label}</SystemLabel>
     </div>
   );
 }
 
 const buttonBase =
-  "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors";
+  "inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow,color] duration-200";
 
 export const buttonStyles = {
-  primary: `${buttonBase} bg-accent text-accent-ink hover:bg-[#ffc861]`,
-  secondary: `${buttonBase} border border-line bg-surface-2 text-text hover:border-white/25`,
+  primary: `${buttonBase} bg-accent text-accent-ink shadow-[0_0_24px_-6px_var(--color-brand)] hover:bg-[#a5b4fc] hover:shadow-[0_0_32px_-4px_var(--color-brand)]`,
+  secondary: `${buttonBase} border border-line bg-ink/40 text-text hover:border-accent/60 hover:text-accent`,
 };
 
 const isExternal = (href: string) => /^https?:\/\//.test(href);
@@ -58,7 +71,7 @@ export function LinkButton({
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
     >
       {link.label}
-      {link.note && <span className="font-normal opacity-70">· {link.note}</span>}
+      {link.note && <span className="normal-case tracking-normal opacity-70">· {link.note}</span>}
       {external && <ArrowUpRight className="size-4" />}
       {external && <span className="sr-only">(opens in a new tab)</span>}
     </a>

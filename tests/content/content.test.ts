@@ -42,9 +42,10 @@ describe("content integrity", () => {
     }
   });
 
-  it("every project has at least one link and accent colour", () => {
+  it("every project has a link, or says why it has none, and an accent colour", () => {
     for (const project of projects) {
-      expect(project.links.length, project.slug).toBeGreaterThan(0);
+      if (project.kind === "open-source") expect(project.links.length, project.slug).toBeGreaterThan(0);
+      if (project.links.length === 0) expect(project.access, project.slug).toBeTruthy();
       expect(project.accent).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });

@@ -67,7 +67,7 @@ function ScreenFace({
 }
 
 /** Accent light strip that fades in with emphasis (no real light added). */
-function GlowStrip({ id, size, position, color = "#f5b544" }: { id: string; size: [number, number, number]; position: [number, number, number]; color?: string }) {
+function GlowStrip({ id, size, position, color = "#6366f1" }: { id: string; size: [number, number, number]; position: [number, number, number]; color?: string }) {
   const material = useRef<MeshBasicMaterial>(null);
   useEmphasis(id, (value) => {
     if (material.current) material.current.opacity = value;
@@ -107,11 +107,11 @@ function createFillerTexture() {
   const W = 1024;
   const H = 128;
   const { canvas, ctx } = createCanvas(W, H);
-  ctx.fillStyle = "#0e1312";
+  ctx.fillStyle = "#0b0f19";
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   const text = `${profile.name.toUpperCase()}  ·  ${profile.headline.toUpperCase()}`;
-  fitText(ctx, text, W - 80, 64, (size) => `700 ${size}px ${fonts.display()}`);
+  fitText(ctx, text, W - 80, 64, (size) => `400 ${size}px ${fonts.display()}`);
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
   ctx.fillText(text, W / 2, H / 2 + 3);

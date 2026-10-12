@@ -44,7 +44,7 @@ Where [R] and [LI] disagree, **[LI] wins** (owner's instruction). Résumé detai
 - Platforms and practice: GitHub Actions (CI/CD), Docker, Kubernetes, PostgreSQL, MongoDB, Supabase, GCP, AWS (Lambda, S3, Textract), SonarQube, TDD
 
 **Certifications [LI]:** Postman Student Expert · Microsoft ADC Learnathon Champion
-**Spoken languages [LI]:** English (full professional), Igbo (native)
+**Spoken languages [LI]:** English (full professional), Spanish (Limited working proficiency), Igbo (native)
 **Education:** omitted from the site (owner's instruction).
 
 ---
