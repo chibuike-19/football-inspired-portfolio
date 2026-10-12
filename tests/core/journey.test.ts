@@ -88,6 +88,38 @@ describe("planTransition", () => {
   });
 });
 
+describe("enclosed spaces (tunnel)", () => {
+  const mouth = pose(34, 2, -10, 40, 2, -10);
+  const inside = pose(38, 1.7, -10, 41, 1.6, -9);
+  const back = pose(35, 2, -10, 28, 2, -10);
+  const tunnel = { chapter: "journey" as const, pose: inside, enter: [mouth], exit: [back] };
+  const trophies = station("trophies", pose(56, 2, -10, 60, 2, -10));
+  const kickoff = station("kickoff", pose(0, 15, 31, 0, 2, -9));
+
+  it("enters through the mouth from any chapter, including direct jumps", () => {
+    for (const from of ["highlights", "kickoff", "fulltime"] as const) {
+      const t = planTransition(pose(0, 20, 30), from, tunnel, { interrupted: false, reducedMotion: false });
+      expect(t.points.some((p) => close(p, mouth)), from).toBe(true);
+    }
+  });
+
+  it("leaves back through the mouth when going to an earlier chapter", () => {
+    const t = planTransition(inside, "journey", kickoff, { interrupted: false, reducedMotion: false, from: tunnel });
+    expect(close(t.points[1], back)).toBe(true);
+  });
+
+  it("does not turn back when continuing forward to the next chapter", () => {
+    const t = planTransition(inside, "journey", trophies, { interrupted: false, reducedMotion: false, from: tunnel });
+    expect(t.points.some((p) => close(p, back))).toBe(false);
+  });
+
+  it("moves between stops inside without waypoints", () => {
+    const next = { ...tunnel, pose: pose(42, 1.7, -10, 45, 1.6, -9) };
+    const t = planTransition(inside, "journey", next, { interrupted: false, reducedMotion: false, from: tunnel });
+    expect(t.points).toHaveLength(2);
+  });
+});
+
 describe("sampleTransition", () => {
   const from = pose(0, 10, 10, 0, 0, 0);
   const to = pose(20, 4, -10, 5, 1, -20);

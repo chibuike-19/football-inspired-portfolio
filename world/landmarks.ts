@@ -1,7 +1,7 @@
 import { projects } from "@/content";
 import { CAMERA, DISCOVERY } from "@/core/config";
 import type { DiscoveryLandmark } from "@/core/discovery";
-import { BOARD, GOAL, GROUND, PITCH, STAND } from "./layout";
+import { BOARD, GOAL, GROUND, PITCH, STAND, TUNNEL } from "./layout";
 
 export type Vec2 = readonly [x: number, z: number];
 export type Vec3 = readonly [x: number, y: number, z: number];
@@ -167,7 +167,7 @@ export const LANDMARKS: LandmarkDef[] = [
     // Discovery spot sits a little north of centre so it stays clear of the nearest board's area.
     position: [PITCH.halfLength - 4, -(GOAL.halfWidth + 4.8)],
     // Mouth at the front of the east stand; the canopy extends towards the pitch.
-    structure: [GROUND.halfX + STAND.gap, 0, -(GOAL.halfWidth + 6)],
+    structure: [TUNNEL.start, 0, TUNNEL.z],
     rotation: -Math.PI / 2,
     // Top of the sign above the tunnel mouth, so the card sits above the sign.
     anchor: [GROUND.halfX + STAND.gap, 6.3, -(GOAL.halfWidth + 6)],

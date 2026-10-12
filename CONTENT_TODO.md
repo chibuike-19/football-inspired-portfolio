@@ -20,7 +20,7 @@ Until resolved, the site hides or omits these items rather than inventing values
 
 ## Journey (3D) — open items
 - [ ] Phones: Playbook and Career Highlights have portrait framing; step 6 adds it for the remaining chapters.
-- [ ] Journey and Trophy chapters use placeholder camera positions until the tunnel interior (step 4) and trophy room (step 5) are built.
+- [ ] Trophy chapter uses placeholder camera positions until the trophy room (step 5) is built; the move from the tunnel to them is temporary.
 
 ## Optional
 - [ ] Project screenshots. DevSpot: any you can share. FCMB: only with client permission. Otherwise boards stay typographic.

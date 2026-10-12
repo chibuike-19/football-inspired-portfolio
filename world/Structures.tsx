@@ -302,11 +302,17 @@ function Tunnel({ landmark }: { landmark: LandmarkDef }) {
           <meshStandardMaterial color="#2c3438" />
         </mesh>
       ))}
-      {/* Dark mouth into the stand. */}
-      <mesh position={[0, height / 2, -0.05]}>
-        <boxGeometry args={[width + 0.8, height + 0.6, 0.3]} />
-        <meshStandardMaterial color="#05080a" roughness={1} />
+      {/* Frame around the corridor opening (the corridor itself is TunnelInterior). */}
+      <mesh position={[0, height + 0.25, 0.1]}>
+        <boxGeometry args={[width + 0.8, 0.5, 0.3]} />
+        <meshStandardMaterial color={FRAME} roughness={0.8} />
       </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={`jamb-${s}`} position={[s * (width / 2 + 0.2), height / 2, 0.1]}>
+          <boxGeometry args={[0.4, height, 0.3]} />
+          <meshStandardMaterial color={FRAME} roughness={0.8} />
+        </mesh>
+      ))}
       <GlowStrip id={landmark.id} size={[width + 0.8, 0.12, 0.08]} position={[0, height + 0.36, 0.14]} />
       {/* Sign turned towards the follow camera so it reads from the pitch. */}
       <group position={[0, height + 1.25, 0.3]} rotation-y={yawTowardsCamera(landmark.structure, landmark.position) - landmark.rotation}>

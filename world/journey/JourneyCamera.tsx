@@ -67,6 +67,8 @@ export function JourneyCamera({ ball, resume }: Props) {
   const transition = useRef<Transition | null>(null);
   const elapsed = useRef(0);
   const fromChapter = useRef<ChapterId | null>(null);
+  const fromStation = useRef<JourneyStation | null>(null);
+  const pendingFrom = useRef<JourneyStation | null>(null);
   const ballPosition = useRef({ ...BALL_START });
   const ballTarget = useRef({ ...BALL_START });
   const started = useRef(false);
@@ -110,11 +112,18 @@ export function JourneyCamera({ ball, resume }: Props) {
     const moving = transition.current !== null && elapsed.current < transition.current.duration;
     const fromChapterBefore = fromChapter.current;
     const kind = !started.current ? "intro" : pendingReplay.current ? "replay" : "move";
-    const plan = planTransition(pose.current, fromChapter.current, target, { interrupted: moving, reducedMotion, kind });
+    const plan = planTransition(pose.current, fromChapter.current, target, {
+      interrupted: moving,
+      reducedMotion,
+      kind,
+      from: fromStation.current,
+    });
 
     transition.current = plan;
     elapsed.current = 0;
-    fromChapter.current = target.chapter;
+    // Where the camera "is" changes only once it has mostly arrived (see useFrame), so a move
+    // redirected early still plans from the place it left, e.g. back through the tunnel mouth.
+    pendingFrom.current = station_;
     started.current = true;
     pendingReplay.current = false;
     ballTarget.current = { ...target.ball };
@@ -137,6 +146,11 @@ export function JourneyCamera({ ball, resume }: Props) {
     let busy = false;
 
     const plan = transition.current;
+    if (plan && pendingFrom.current && elapsed.current >= plan.duration * ARRIVAL_SWAP) {
+      fromStation.current = pendingFrom.current;
+      fromChapter.current = pendingFrom.current.chapter;
+      pendingFrom.current = null;
+    }
     if (plan && pendingArrival.current && elapsed.current >= plan.duration * ARRIVAL_SWAP) {
       const arrived = pendingArrival.current;
       pendingArrival.current = null;

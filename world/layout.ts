@@ -51,3 +51,18 @@ export const BOARD = {
   /** Distance of the board line beyond the touchline. */
   offset: 1.8,
 } as const;
+
+/**
+ * Players' tunnel: a corridor from the mouth in the east stand, under the
+ * tiers and out the back into a low annex that ends at the trophy-room doors.
+ * Axis-aligned along +x; z is the corridor's centre line.
+ */
+export const TUNNEL = {
+  z: -(GOAL.halfWidth + 6),
+  width: 4.2,
+  height: 3.2,
+  /** Mouth, flush with the front of the east stand. */
+  start: GROUND.halfX + STAND.gap,
+  /** Doors to the trophy room. */
+  end: GROUND.halfX + STAND.gap + 16,
+} as const;

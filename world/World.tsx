@@ -33,6 +33,7 @@ import { Pitch } from "./Pitch";
 import { QUALITY } from "./quality";
 import { Stadium } from "./Stadium";
 import { Structures } from "./Structures";
+import { TunnelInterior } from "./TunnelInterior";
 import { loadCanvasFonts } from "./textures/canvas";
 
 const DEBUG = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_WORLD_DEBUG === "1";
@@ -369,7 +370,12 @@ export default function World() {
           )}
           {stage >= 2 && <Goals />}
           {stage >= 3 && <Stadium crowdDensity={settings.crowdDensity} />}
-          {stage >= 4 && <Structures />}
+          {stage >= 4 && (
+            <>
+              <Structures />
+              <TunnelInterior />
+            </>
+          )}
           {stage >= 5 && (
             <>
               {freeplay && <GroundMarkers />}

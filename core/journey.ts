@@ -35,6 +35,13 @@ export interface StationCamera {
   portrait?: Pose;
   /** Waypoints used when arriving from the previous chapter, for spatial continuity. */
   via?: Pose[];
+  /**
+   * Waypoints used whenever this station is reached from another chapter
+   * (e.g. the tunnel mouth), so the camera never passes through walls.
+   */
+  enter?: Pose[];
+  /** Waypoints used when leaving for any chapter other than the next one (e.g. back out of the tunnel). */
+  exit?: Pose[];
 }
 
 export const JOURNEY_TIMING = {
@@ -89,7 +96,7 @@ export function planTransition(
   current: Pose,
   fromChapter: ChapterId | null,
   to: StationCamera,
-  options: { interrupted: boolean; reducedMotion: boolean; kind?: TransitionKind },
+  options: { interrupted: boolean; reducedMotion: boolean; kind?: TransitionKind; from?: StationCamera | null },
 ): Transition {
   const kind = options.kind ?? "move";
   if (options.reducedMotion) return { points: [current, to.pose], duration: 0, ease: "out" };
@@ -107,6 +114,16 @@ export function planTransition(
     via = to.via ?? [];
   } else {
     duration = gap === 1 ? JOURNEY_TIMING.NEXT_CHAPTER : JOURNEY_TIMING.JUMP;
+  }
+
+  // Enclosed spaces: leave and enter through their openings.
+  const changingChapter = gap > 0 && kind === "move";
+  const forwardNext = fromChapter !== null && chapterIndex(to.chapter) === chapterIndex(fromChapter) + 1;
+  const exit = changingChapter && !forwardNext ? (options.from?.exit ?? []) : [];
+  const enter = changingChapter ? (to.enter ?? []) : [];
+  if (exit.length > 0 || enter.length > 0) {
+    via = [...exit, ...(enter.length > 0 ? enter : via)];
+    duration = Math.max(duration, JOURNEY_TIMING.NEXT_CHAPTER);
   }
 
   if (via.length === 0 && distance(current, to.pose) > JOURNEY_TIMING.ARC_MIN_DISTANCE) {

@@ -3,7 +3,7 @@ import type { ChapterId, Pose, StationCamera } from "@/core/journey";
 import type { ScoreboardText } from "@/state/store";
 import { formatRange } from "@/lib/format";
 import { LANDMARK_BY_ID } from "../landmarks";
-import { GROUND, PITCH, STAND } from "../layout";
+import { GROUND, TUNNEL } from "../layout";
 
 /**
  * The journey as a list of stations (owner spec, 2026-10-12). Each station is a
@@ -47,6 +47,13 @@ const pose = (px: number, py: number, pz: number, tx: number, ty: number, tz: nu
 
 /** Before the first station: a high, wide establishing shot. */
 export const ESTABLISHING_POSE = pose(-18, 38, 62, 0, 0, -4);
+/** Camera stop (x) for company `i` of `count` along the tunnel; the last sits just before the doors. */
+export function tunnelStop(i: number, count: number): number {
+  const first = TUNNEL.start + 3.4;
+  const last = TUNNEL.end - 2.6;
+  return count <= 1 ? last : first + ((last - first) * i) / (count - 1);
+}
+
 /** Where the ball starts before rolling towards the centre circle. */
 export const BALL_START = { x: -14, z: 9 };
 
@@ -144,26 +151,32 @@ function build(): JourneyStation[] {
     });
   });
 
-  // The players' tunnel at the east end. Placeholder poses outside the mouth
-  // until the tunnel interior is built (journey step 4).
+  // The players' tunnel: one stop per company along the corridor, branding on
+  // the right-hand (south) wall, the trophy-room doors at the far end.
   const tunnel = LANDMARK_BY_ID.get("resume")!;
-  const tunnelX = GROUND.halfX + STAND.gap;
+  const zc = TUNNEL.z;
+  const tunnelEnter = [pose(26, 3.6, zc, TUNNEL.start, 2, zc), pose(TUNNEL.start - 1.6, 1.8, zc, TUNNEL.start + 6, 1.7, zc)];
+  const tunnelExit = [pose(TUNNEL.start + 1, 1.9, zc, TUNNEL.start - 8, 1.9, zc), pose(28, 4.5, zc, 12, 1, -4)];
   experience.forEach((entry, i) => {
     const position = entry.positions[0];
+    const x = tunnelStop(i, experience.length);
     list.push({
       id: `experience:${entry.id}`,
       chapter: "journey",
       label: `Journey · ${entry.company}`,
-      pose: pose(tunnelX - 13 + i * 2.4, 3.2, tunnel.structure[2] + 1, tunnelX + 2 + i * 2, 2.2, tunnel.structure[2]),
-      via: i === 0 ? [pose(PITCH.halfLength - 6, 7, 0, tunnelX, 2, -6)] : undefined,
+      // Looking down the corridor, angled slightly towards the company's wall sign.
+      pose: pose(x - 3.4, 1.65, zc - 0.55, x + 2.6, 1.5, zc + 0.95),
+      portrait: pose(x - 4.4, 2.1, zc - 0.7, x + 1.2, 1.25, zc + 1.0),
+      enter: tunnelEnter,
+      exit: tunnelExit,
       ball: { x: tunnel.position[0], z: tunnel.position[1] },
       scoreboard: { kicker: "Match history", title: entry.company, lines: [`${position.title} · ${formatRange(position)}`] },
+      highlight: "resume",
       // Leaving the highlights: the boards settle, the scoreboard bridges the story, the tunnel lights up.
       arriving:
         i === 0
           ? { scoreboard: { kicker: "Career highlights", title: "Every highlight has a story", lines: [] }, highlight: "resume" }
           : undefined,
-      highlight: "resume",
       panel: { kind: "experience", id: entry.id },
       side: "left",
       sub: { index: i, total: experience.length },
