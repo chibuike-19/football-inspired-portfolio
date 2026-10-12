@@ -31,7 +31,7 @@ function createRingTexture() {
 function Marker({ landmark, texture }: { landmark: LandmarkDef; texture: ReturnType<typeof createRingTexture> }) {
   const material = useRef<MeshBasicMaterial>(null);
   useEmphasis(landmark.id, (value) => {
-    if (material.current) material.current.opacity = lerp(0.16, 0.7, value);
+    if (material.current) material.current.opacity = Math.max(0, lerp(0.16, 0.7, value));
   });
   const size = Math.min(landmark.activeRadius * 0.9, 3.6);
   return (

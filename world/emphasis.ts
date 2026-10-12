@@ -5,8 +5,8 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { damp } from "@/core/math";
 import { useWorldStore } from "@/state/store";
 
-/** Emphasis level for each proximity state. */
-export const EMPHASIS = { idle: 0, near: 0.45, active: 1 } as const;
+/** Emphasis level for each state; "dim" is below the ambient level (another board has the focus). */
+export const EMPHASIS = { dim: -0.6, idle: 0, near: 0.45, active: 1 } as const;
 
 const LAMBDA = 6;
 

@@ -72,7 +72,7 @@ function ScreenFace({
 function GlowStrip({ id, size, position, color = "#6366f1" }: { id: string; size: [number, number, number]; position: [number, number, number]; color?: string }) {
   const material = useRef<MeshBasicMaterial>(null);
   useEmphasis(id, (value) => {
-    if (material.current) material.current.opacity = value;
+    if (material.current) material.current.opacity = Math.max(0, value);
   });
   return (
     <mesh position={position}>

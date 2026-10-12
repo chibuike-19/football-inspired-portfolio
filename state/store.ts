@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type { ProximityState } from "@/core/discovery";
 
+/** Proximity states plus "dim": pushed back while another landmark has the focus (journey). */
+export type EmphasisState = ProximityState | "dim";
+
 export type Mode = "world" | "classic";
 export type WorldStatus = "idle" | "loading" | "ready" | "failed";
 export type Quality = "high" | "medium" | "low";
@@ -64,8 +67,8 @@ interface WorldState {
   clearAutopilot: () => void;
   /** Discovery output (SPEC §7.4); written only when it changes. */
   activeLandmarkId: string | null;
-  landmarkStates: Record<string, ProximityState>;
-  setDiscovery: (activeLandmarkId: string | null, landmarkStates: Record<string, ProximityState>) => void;
+  landmarkStates: Record<string, EmphasisState>;
+  setDiscovery: (activeLandmarkId: string | null, landmarkStates: Record<string, EmphasisState>) => void;
   setMode: (mode: Mode) => void;
   setStatus: (status: WorldStatus) => void;
   setQuality: (quality: Quality) => void;

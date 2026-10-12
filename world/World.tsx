@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { PCFShadowMap, type Mesh } from "three";
 import { CAMERA } from "@/core/config";
 import { createSimulation, type Simulation } from "@/core/simulation";
@@ -56,7 +56,7 @@ function DebugCamera({ values }: { values: number[] }) {
 }
 
 /** Debug builds only: `window.__world` for Playwright (SPEC §15.2). */
-function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
+function useDebugHook(simulation: Simulation, pick: () => TapPicker | null, ball: RefObject<Mesh | null>) {
   const invalidate = useThree((state) => state.invalidate);
   const get = useThree((state) => state.get);
   useEffect(() => {
@@ -75,6 +75,9 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
           journeyStation,
           scoreboard,
           camera: { x: camera.x, y: camera.y, z: camera.z },
+          /** The ball as rendered (journey or free play). */
+          ballMesh: ball.current ? { x: ball.current.position.x, z: ball.current.position.z } : null,
+          landmarkStates: useWorldStore.getState().landmarkStates,
         };
       },
       pick: (clientX: number, clientY: number) => pick()?.(clientX, clientY) ?? null,
@@ -92,11 +95,19 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
     return () => {
       delete (window as unknown as { __world?: typeof hook }).__world;
     };
-  }, [simulation, invalidate, pick, get]);
+  }, [simulation, invalidate, pick, get, ball]);
 }
 
-function DebugHook({ simulation, pick }: { simulation: Simulation; pick: () => TapPicker | null }) {
-  useDebugHook(simulation, pick);
+function DebugHook({
+  simulation,
+  pick,
+  ball,
+}: {
+  simulation: Simulation;
+  pick: () => TapPicker | null;
+  ball: RefObject<Mesh | null>;
+}) {
+  useDebugHook(simulation, pick, ball);
   return null;
 }
 
@@ -329,7 +340,7 @@ export default function World() {
           <ContextLossGuard />
           <Lighting shadows={settings.shadows} shadowMapSize={settings.shadowMapSize} introRamp={introRamp} />
           {debugCamera && <DebugCamera values={debugCamera} />}
-          <DebugHook simulation={simulation} pick={getPicker} />
+          <DebugHook simulation={simulation} pick={getPicker} ball={ball} />
           <TapBridge register={registerPicker} />
           {freeplay ? (
             <>

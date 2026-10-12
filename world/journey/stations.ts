@@ -29,6 +29,13 @@ export interface JourneyStation extends StationCamera {
   scoreboard: ScoreboardText | null;
   /** Landmark to emphasise (board, tunnel, scoreboard). */
   highlight: string | null;
+  /** Push the other project boards below their ambient level so the highlighted one stands out. */
+  dimBoards?: boolean;
+  /**
+   * Shown while the camera travels in from the previous chapter, replaced by
+   * `scoreboard` / `highlight` as it arrives (spec transition 04 → 05).
+   */
+  arriving?: { scoreboard: ScoreboardText | null; highlight: string | null };
   panel: PanelSpec;
   /** Where the panel sits on wide screens, chosen to keep the focus object clear. */
   side: "left" | "right";
@@ -46,6 +53,16 @@ export const BALL_START = { x: -14, z: 9 };
 const KICKOFF_POSE = pose(0, 15, 31, 0, 2, -9);
 // Inside the bowl, above the south stand front, so its roof stays out of frame.
 const FULLTIME_POSE = pose(0, 22, 30, 0, 1, -6);
+
+/**
+ * Portrait screens: further back and aimed at the ground in front of the
+ * structure, so the structure sits in the upper half above the bottom sheet.
+ */
+function facingPortrait(structure: readonly [number, number, number], rotation: number): Pose {
+  const fx = Math.sin(rotation);
+  const fz = Math.cos(rotation);
+  return pose(structure[0] + fx * 16, 7.5, structure[2] + fz * 16, structure[0] + fx * 8, 0, structure[2] + fz * 8);
+}
 
 /** A camera that looks at a structure head-on from in front of it. */
 function facing(structure: readonly [number, number, number], rotation: number, distance: number, height: number): Pose {
@@ -113,12 +130,14 @@ function build(): JourneyStation[] {
       chapter: "highlights",
       label: `Highlights · ${project.name}`,
       pose: facing(board.structure, board.rotation, 12, 3.6),
+      portrait: facingPortrait(board.structure, board.rotation),
       // First project: tilt back to stadium level and follow the ball towards the boards.
       via: i === 0 ? [pose(board.structure[0] * 0.5, 14, 6, board.structure[0] * 0.8, 1, -16)] : undefined,
       // Near the board, not under the camera.
       ball: { x: board.position[0], z: board.position[1] - (board.rotation === 0 ? 2 : 0) },
       scoreboard: { kicker: "Career highlights", title: project.name, lines: [project.context ?? ""] },
       highlight: board.id,
+      dimBoards: true,
       panel: { kind: "project", slug: project.slug },
       side: "left",
       sub: { index: i, total: projects.length },
@@ -138,9 +157,12 @@ function build(): JourneyStation[] {
       pose: pose(tunnelX - 13 + i * 2.4, 3.2, tunnel.structure[2] + 1, tunnelX + 2 + i * 2, 2.2, tunnel.structure[2]),
       via: i === 0 ? [pose(PITCH.halfLength - 6, 7, 0, tunnelX, 2, -6)] : undefined,
       ball: { x: tunnel.position[0], z: tunnel.position[1] },
-      scoreboard: i === 0
-        ? { kicker: "Every highlight has a story", title: "Match history", lines: [entry.company] }
-        : { kicker: "Match history", title: entry.company, lines: [`${position.title} · ${formatRange(position)}`] },
+      scoreboard: { kicker: "Match history", title: entry.company, lines: [`${position.title} · ${formatRange(position)}`] },
+      // Leaving the highlights: the boards settle, the scoreboard bridges the story, the tunnel lights up.
+      arriving:
+        i === 0
+          ? { scoreboard: { kicker: "Career highlights", title: "Every highlight has a story", lines: [] }, highlight: "resume" }
+          : undefined,
       highlight: "resume",
       panel: { kind: "experience", id: entry.id },
       side: "left",

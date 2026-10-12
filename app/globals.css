@@ -1143,6 +1143,36 @@ html.reduce-motion .playbook-marker > button {
   transition-delay: 0s !important;
 }
 
+/* Direct selection within a chapter: one dot per item; 24px hit area around a small mark. */
+.sub-dot {
+  position: relative;
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sub-dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  translate: -50% -50%;
+  border-radius: 999px;
+  background: rgb(148 163 184 / 0.45);
+  transition: width 200ms ease, background-color 200ms ease;
+}
+
+.sub-dot:hover::after {
+  background: var(--color-text);
+}
+
+.sub-dot[aria-current="step"]::after {
+  width: 1.1rem;
+  background: var(--color-accent);
+}
+
 /* "Scroll" cue: a small dot travelling down a track. */
 .scroll-cue {
   position: relative;

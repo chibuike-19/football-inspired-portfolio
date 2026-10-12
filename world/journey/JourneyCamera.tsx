@@ -4,14 +4,18 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type RefObject } from "react";
 import { PerspectiveCamera, type Mesh } from "three";
 import { fovForAspect } from "@/core/camera";
-import { planTransition, sampleTransition, type ChapterId, type Pose, type Transition } from "@/core/journey";
+import { CHAPTERS, planTransition, sampleTransition, type ChapterId, type Pose, type Transition } from "@/core/journey";
 import { damp } from "@/core/math";
-import type { ProximityState } from "@/core/discovery";
-import { useWorldStore } from "@/state/store";
+import { useWorldStore, type EmphasisState } from "@/state/store";
 import { rollBall } from "../ballRoll";
 import { LANDMARKS } from "../landmarks";
 import { BALL } from "../layout";
-import { BALL_START, ESTABLISHING_POSE, STATIONS } from "./stations";
+import { BALL_START, ESTABLISHING_POSE, STATIONS, type JourneyStation } from "./stations";
+
+const chapterBefore = (chapter: ChapterId): ChapterId | null => {
+  const index = CHAPTERS.findIndex((c) => c.id === chapter);
+  return index > 0 ? CHAPTERS[index - 1].id : null;
+};
 
 /** How quickly the ball rolls to its next resting spot. */
 const BALL_LAMBDA = 1.6;
@@ -22,12 +26,20 @@ interface Props {
   resume: boolean;
 }
 
-/** Highlight exactly one landmark (or none) through the shared emphasis state. */
-function publishHighlight(id: string | null) {
-  const states: Record<string, ProximityState> = {};
-  for (const landmark of LANDMARKS) states[landmark.id] = landmark.id === id ? "active" : "idle";
+/**
+ * Highlight exactly one landmark (or none) through the shared emphasis state.
+ * With `dimBoards`, the other project boards drop below their ambient level.
+ */
+function publishHighlight(id: string | null, dimBoards = false) {
+  const states: Record<string, EmphasisState> = {};
+  for (const landmark of LANDMARKS) {
+    states[landmark.id] = landmark.id === id ? "active" : dimBoards && landmark.kind === "board" ? "dim" : "idle";
+  }
   useWorldStore.getState().setDiscovery(id, states);
 }
+
+/** Fraction of a move after which the arriving station's final scoreboard and highlight apply. */
+const ARRIVAL_SWAP = 0.7;
 
 const poseOf = (camera: { position: { x: number; y: number; z: number } }, target: Pose["tx"][]): Pose => ({
   px: camera.position.x,
@@ -58,6 +70,8 @@ export function JourneyCamera({ ball, resume }: Props) {
   const ballPosition = useRef({ ...BALL_START });
   const ballTarget = useRef({ ...BALL_START });
   const started = useRef(false);
+  /** Station whose final scoreboard/highlight replace its `arriving` state near the end of the move. */
+  const pendingArrival = useRef<JourneyStation | null>(null);
   const pendingReplay = useRef(false);
 
   // Returning from free play: continue from wherever the camera and ball are.
@@ -94,6 +108,7 @@ export function JourneyCamera({ ball, resume }: Props) {
     const target = portrait && station_.portrait ? { ...station_, pose: station_.portrait } : station_;
     const { reducedMotion, setScoreboard, setPanelDelay } = useWorldStore.getState();
     const moving = transition.current !== null && elapsed.current < transition.current.duration;
+    const fromChapterBefore = fromChapter.current;
     const kind = !started.current ? "intro" : pendingReplay.current ? "replay" : "move";
     const plan = planTransition(pose.current, fromChapter.current, target, { interrupted: moving, reducedMotion, kind });
 
@@ -104,8 +119,13 @@ export function JourneyCamera({ ball, resume }: Props) {
     pendingReplay.current = false;
     ballTarget.current = { ...target.ball };
 
-    setScoreboard(target.scoreboard);
-    publishHighlight(target.highlight);
+    // Arriving from the previous chapter: bridge with the station's `arriving` state first.
+    const bridging =
+      target.arriving && kind === "move" && fromChapterBefore !== null && chapterBefore(target.chapter) === fromChapterBefore;
+    const shown = bridging ? target.arriving! : target;
+    setScoreboard(shown.scoreboard);
+    publishHighlight(shown.highlight, !bridging && target.dimBoards);
+    pendingArrival.current = bridging ? target : null;
     // Content appears as the camera is arriving, not after it stops (spec §5).
     setPanelDelay(kind === "intro" ? 0.35 : plan.duration * 0.55);
     invalidate();
@@ -117,6 +137,12 @@ export function JourneyCamera({ ball, resume }: Props) {
     let busy = false;
 
     const plan = transition.current;
+    if (plan && pendingArrival.current && elapsed.current >= plan.duration * ARRIVAL_SWAP) {
+      const arrived = pendingArrival.current;
+      pendingArrival.current = null;
+      useWorldStore.getState().setScoreboard(arrived.scoreboard);
+      publishHighlight(arrived.highlight, arrived.dimBoards);
+    }
     if (plan) {
       elapsed.current += dt;
       pose.current = sampleTransition(plan, elapsed.current);

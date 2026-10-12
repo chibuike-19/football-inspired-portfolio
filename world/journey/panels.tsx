@@ -18,10 +18,17 @@ const heading = "font-display uppercase leading-none tracking-wide";
 const textLink =
   "inline-flex min-h-10 items-center gap-1.5 font-mono text-xs uppercase tracking-[0.12em] text-accent hover:underline";
 
-/** Previous / next within a chapter, with a position read-out (e.g. 02 / 07). */
+/** Short name for a station inside its chapter (e.g. the project or company name). */
+const subLabel = (station: JourneyStation) => station.label.split(" · ").slice(1).join(" · ") || station.label;
+
+/**
+ * Within a chapter: previous / next, plus one dot per item for direct selection
+ * (spec §4, project navigation). Reused for companies and trophies.
+ */
 function SubNav({ station }: { station: JourneyStation }) {
   if (!station.sub) return null;
   const { index, total } = station.sub;
+  const siblings = STATIONS.filter((s) => s.chapter === station.chapter);
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <div className="mt-6 flex items-center justify-between gap-3 border-t border-line pt-4">
@@ -33,9 +40,25 @@ function SubNav({ station }: { station: JourneyStation }) {
       >
         <ArrowLeft className="size-4" />
       </button>
-      <p className="font-mono text-xs tracking-[0.2em] text-muted" aria-label={`${index + 1} of ${total}`}>
-        <span className="text-text">{pad(index + 1)}</span> / {pad(total)}
-      </p>
+      <div className="flex flex-col items-center gap-2">
+        <ol className="flex items-center gap-1" aria-label="Jump to">
+          {siblings.map((sibling) => (
+            <li key={sibling.id}>
+              <button
+                type="button"
+                onClick={() => go(sibling.index)}
+                aria-label={subLabel(sibling)}
+                aria-current={sibling.index === station.index ? "step" : undefined}
+                title={subLabel(sibling)}
+                className="sub-dot"
+              />
+            </li>
+          ))}
+        </ol>
+        <p className="font-mono text-[11px] tracking-[0.2em] text-muted" aria-hidden="true">
+          <span className="text-text">{pad(index + 1)}</span> / {pad(total)}
+        </p>
+      </div>
       <button
         type="button"
         onClick={() => go(station.index + 1)}
