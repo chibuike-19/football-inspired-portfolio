@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AUTOPLAY, autoplayProgress, startStation, tickAutoplay, type AutoplayClock } from "@/core/autoplay";
 import { useWorldStore } from "@/state/store";
 import { STATIONS } from "./stations";
@@ -27,7 +27,6 @@ const RING = 2 * Math.PI * 9;
 export function AutoplayControl({ driver = true }: { driver?: boolean }) {
   const autoplay = useWorldStore((s) => s.autoplay);
   const finished = useWorldStore((s) => s.journeyStation >= STATIONS.length - 1);
-  const ring = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     if (!driver) return;
@@ -63,7 +62,9 @@ export function AutoplayControl({ driver = true }: { driver?: boolean }) {
       if (!clock) return;
       const held = !s.autoplay || s.autoplayHolds.length > 0 || s.expandedId !== null || document.hidden || reading();
       if (tickAutoplay(clock, dt, held)) s.requestJourneyJump(station + 1);
-      if (ring.current) ring.current.style.strokeDashoffset = String(RING * (1 - autoplayProgress(clock)));
+      // Every rendered control (desktop and phone) shows the same progress.
+      const offset = String(RING * (1 - autoplayProgress(clock)));
+      document.querySelectorAll<SVGCircleElement>(".autoplay-ring").forEach((el) => (el.style.strokeDashoffset = offset));
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
@@ -83,7 +84,6 @@ export function AutoplayControl({ driver = true }: { driver?: boolean }) {
       <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true">
         <circle cx="12" cy="12" r="9" fill="none" stroke="rgb(148 163 184 / 0.3)" strokeWidth="2" />
         <circle
-          ref={ring}
           cx="12"
           cy="12"
           r="9"
@@ -93,7 +93,7 @@ export function AutoplayControl({ driver = true }: { driver?: boolean }) {
           strokeDasharray={RING}
           strokeDashoffset={RING}
           transform="rotate(-90 12 12)"
-          className="text-accent"
+          className="autoplay-ring text-accent"
         />
         {autoplay || finished ? (
           <path d="M10 8.5v7M14 8.5v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

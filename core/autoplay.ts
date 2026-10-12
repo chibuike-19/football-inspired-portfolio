@@ -5,8 +5,9 @@
  */
 
 export const AUTOPLAY = {
-  /** Seconds to rest at a station once the camera has arrived (owner: 3–5 s). */
-  DWELL: 4,
+  /** Seconds to rest at a station once the camera has arrived. With ~1–2 s moves this
+   *  puts 3–5 s between movements (owner request). */
+  DWELL: 3,
 } as const;
 
 /** Why autoplay is holding. The visitor's own pause is one reason among several. */
