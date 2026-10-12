@@ -55,6 +55,9 @@ interface WorldState {
   setPanelDelay: (seconds: number) => void;
   scoreboard: ScoreboardText | null;
   setScoreboard: (text: ScoreboardText | null) => void;
+  /** Selected skill marker in the playbook (hover, focus or tap). */
+  playbookSkill: string | null;
+  setPlaybookSkill: (id: string | null) => void;
   /** Pending menu navigation; the frame loop drives the ball and clears it. */
   autopilot: { target: AutopilotTarget; requestId: number } | null;
   requestAutopilot: (target: AutopilotTarget) => void;
@@ -104,6 +107,8 @@ export const useWorldStore = create<WorldState>()((set) => ({
   setPanelDelay: (panelDelay) => set({ panelDelay }),
   scoreboard: null,
   setScoreboard: (scoreboard) => set({ scoreboard }),
+  playbookSkill: null,
+  setPlaybookSkill: (playbookSkill) => set({ playbookSkill }),
   autopilot: null,
   // Ids only ever increase, so the frame loop can tell a new request from one it already started.
   requestAutopilot: (target) => set({ autopilot: { target, requestId: ++autopilotRequests } }),

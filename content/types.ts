@@ -115,3 +115,14 @@ export interface Trophy {
   context: string;
   items: string[];
 }
+
+/** One player in the playbook's "Starting XI". */
+export interface PlaybookSkill {
+  id: string;
+  role: "Goalkeeper" | "Defender" | "Midfielder" | "Forward";
+  line: "goalkeeper" | "defence" | "midfield" | "attack";
+  name: string;
+  detail: string;
+  /** The capability group (profile.capabilities) it belongs to. */
+  group: string;
+}

@@ -8,6 +8,7 @@ import { useWorldStore } from "@/state/store";
 import { buttonStyles } from "@/ui/primitives";
 import type { TapPicker } from "../TapBridge";
 import { StationPanel } from "./panels";
+import { PlaybookOverlay } from "./Playbook";
 import { chapterStart, STATIONS, stationById } from "./stations";
 
 /**
@@ -254,6 +255,7 @@ export function JourneyLayer({ picker }: { picker: RefObject<TapPicker | null> }
       >
         {/* Pinned layer: panels stay put while the page scrolls underneath. */}
         <div className="journey-sticky">
+          <PlaybookOverlay />
           <JourneyPanels />
         </div>
         {STATIONS.map((station) => (

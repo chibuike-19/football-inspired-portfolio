@@ -19,7 +19,7 @@ Until resolved, the site hides or omits these items rather than inventing values
 - [ ] A larger photo (512 px or more) would make the hero tile sharper on high-density screens; the current one is 200 px (`public/avatar.jpg`, also the favicon source).
 
 ## Journey (3D) — open items
-- [ ] Phones: in Career Highlights the bottom sheet covers the board; portrait framing is part of journey step 6.
+- [ ] Phones: in Career Highlights the bottom sheet covers the board. Stations now support a `portrait` pose (used by the Playbook); step 6 adds portrait poses for the other chapters.
 - [ ] Journey and Trophy chapters use placeholder camera positions until the tunnel interior (step 4) and trophy room (step 5) are built.
 
 ## Optional

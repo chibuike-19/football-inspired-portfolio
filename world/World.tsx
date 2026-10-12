@@ -16,6 +16,8 @@ import { BALL } from "./layout";
 import { SPAWN } from "./landmarks";
 import { JourneyCamera } from "./journey/JourneyCamera";
 import { JourneyLayer } from "./journey/JourneyLayer";
+import { CenterPulse } from "./journey/CenterPulse";
+import { PlaybookProjector } from "./journey/Playbook";
 import { ExpandedPanel } from "./ExpandedPanel";
 import { Hud } from "./Hud";
 import { Onboarding } from "./Onboarding";
@@ -228,6 +230,8 @@ export default function World() {
   const freeplay = experience === "freeplay";
   // The journey resumes from the live camera after free play, not from the establishing shot.
   const journeyResume = useWorldStore((state) => state.journeyResume);
+  // Opening shot only: the stadium lights come up as the journey starts (spec transition 01).
+  const [introRamp] = useState(() => !journeyResume && !reducedMotion);
   const [input] = useState(createInputController);
   useEffect(() => () => input.dispose(), [input]);
 
@@ -323,7 +327,7 @@ export default function World() {
           camera={{ position: [0, CAMERA.HEIGHT, CAMERA.DISTANCE], fov: CAMERA.FOV, near: 0.5, far: 400 }}
         >
           <ContextLossGuard />
-          <Lighting shadows={settings.shadows} shadowMapSize={settings.shadowMapSize} />
+          <Lighting shadows={settings.shadows} shadowMapSize={settings.shadowMapSize} introRamp={introRamp} />
           {debugCamera && <DebugCamera values={debugCamera} />}
           <DebugHook simulation={simulation} pick={getPicker} />
           <TapBridge register={registerPicker} />
@@ -339,7 +343,11 @@ export default function World() {
               <PreviewTracker card={card} simulation={simulation} />
             </>
           ) : (
-            !debugCamera && <JourneyCamera ball={ball} resume={journeyResume} />
+            <>
+              {!debugCamera && <JourneyCamera ball={ball} resume={journeyResume} />}
+              <CenterPulse />
+              <PlaybookProjector />
+            </>
           )}
           {stage >= 1 && (
             <>

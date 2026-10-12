@@ -31,6 +31,8 @@ export interface Pose {
 export interface StationCamera {
   chapter: ChapterId;
   pose: Pose;
+  /** Alternative framing for portrait screens (phones), where the panel is a bottom sheet. */
+  portrait?: Pose;
   /** Waypoints used when arriving from the previous chapter, for spatial continuity. */
   via?: Pose[];
 }

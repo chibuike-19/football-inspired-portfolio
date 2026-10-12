@@ -84,10 +84,14 @@ export function JourneyCamera({ ball, resume }: Props) {
     invalidate();
   }, [get, size, invalidate]);
 
+  const portrait = size.width / Math.max(1, size.height) < 0.8;
+
   // Station change → plan the move and update the stadium (scoreboard, highlight).
   useEffect(() => {
-    const target = STATIONS[station];
-    if (!target) return;
+    const station_ = STATIONS[station];
+    if (!station_) return;
+    // Portrait screens use the station's portrait framing when it has one.
+    const target = portrait && station_.portrait ? { ...station_, pose: station_.portrait } : station_;
     const { reducedMotion, setScoreboard, setPanelDelay } = useWorldStore.getState();
     const moving = transition.current !== null && elapsed.current < transition.current.duration;
     const kind = !started.current ? "intro" : pendingReplay.current ? "replay" : "move";
@@ -105,7 +109,7 @@ export function JourneyCamera({ ball, resume }: Props) {
     // Content appears as the camera is arriving, not after it stops (spec §5).
     setPanelDelay(kind === "intro" ? 0.35 : plan.duration * 0.55);
     invalidate();
-  }, [station, invalidate]);
+  }, [station, portrait, invalidate]);
 
   useFrame(({ camera }, delta) => {
     const dt = Math.min(delta, 0.05);

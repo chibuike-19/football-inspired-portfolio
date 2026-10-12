@@ -94,13 +94,16 @@ function build(): JourneyStation[] {
     chapter: "playbook",
     label: "The playbook",
     // Overhead tactical view; the route rises straight up from the centre circle.
-    pose: pose(0, 44, 9, 0, 0, 0.5),
-    via: [pose(1, 18, 10, 0, 1, -2)],
+    // Centred so the formation fills the space right of the panel.
+    pose: pose(-3, 44, 9, -3, 0, 0.5),
+    // Phones: the pitch runs top to bottom (attack at the top), above the bottom sheet.
+    portrait: pose(33, 56, 0, 24, 0, 0),
+    via: [pose(3, 18, 10, 2, 1, -2)],
     ball: { x: 0, z: 0 },
     scoreboard: { kicker: "Tactics", title: "The playbook", lines: ["The technologies behind the game"] },
     highlight: null,
     panel: { kind: "playbook" },
-    side: "right",
+    side: "left",
   });
 
   projects.forEach((project, i) => {

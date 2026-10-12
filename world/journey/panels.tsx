@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { contact, experience, getProject, profile, trophies } from "@/content";
+import { contact, experience, getProject, playbook, profile, trophies } from "@/content";
 import { formatRange } from "@/lib/format";
 import { kindLabel } from "@/lib/project";
 import { useWorldStore } from "@/state/store";
@@ -124,22 +124,36 @@ function PlayerPanel() {
 }
 
 function PlaybookPanel() {
+  const selectedId = useWorldStore((s) => s.playbookSkill);
+  const skill = playbook.find((item) => item.id === selectedId);
   return (
     <>
-      <p className={kicker}>Tactics</p>
+      <p className={kicker}>Tactics · 4-3-3</p>
       <h2 className={`${heading} mt-2 text-5xl`}>The playbook</h2>
-      <p className="mt-2 text-sm text-muted">The technologies behind the game.</p>
-      <div className="mt-5 space-y-4">
-        {profile.capabilities.map((capability) => (
-          <div key={capability.title}>
-            <p className="font-display text-xl uppercase tracking-wide">{capability.title}</p>
-            <p className="mt-1 text-sm text-muted md:hidden">{capability.summary}</p>
-            <div className="mt-2 max-md:hidden">
-              <TagList items={capability.items} label={capability.title} />
-            </div>
-          </div>
-        ))}
+      <p className="mt-2 text-sm text-muted">The technologies behind the game: my starting XI.</p>
+      {/* Updates in place as players are selected; announced politely for screen readers. */}
+      <div className="mt-5 min-h-44 border border-line bg-ink/40 p-4" aria-live="polite">
+        {skill ? (
+          <>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">
+              #{playbook.indexOf(skill) + 1} · {skill.role} · {skill.group}
+            </p>
+            <p className={`${heading} mt-2 text-3xl`}>{skill.name}</p>
+            <p className="mt-2 leading-relaxed text-text/90">{skill.detail}</p>
+          </>
+        ) : (
+          <p className="text-sm leading-relaxed text-muted">
+            <span className="max-md:hidden">Hover or focus a player on the pitch</span>
+            <span className="md:hidden">Tap a player on the pitch</span> to see what they bring to the team.
+          </p>
+        )}
       </div>
+      <ul className="mt-4 space-y-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted max-md:hidden">
+        <li>Goalkeeper · quality, the last line of defence</li>
+        <li>Defence · the foundations that keep products safe</li>
+        <li>Midfield · what connects the system</li>
+        <li>Attack · what users see and use</li>
+      </ul>
     </>
   );
 }

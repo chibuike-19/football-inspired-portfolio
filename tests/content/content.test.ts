@@ -67,3 +67,19 @@ describe("formatRange", () => {
     expect(formatRange({ start: "2024-11", end: null })).toBe("Nov 2024 – Present");
   });
 });
+
+describe("playbook", () => {
+  it("is a starting XI in a 4-3-3", async () => {
+    const { playbook } = await import("@/content");
+    const count = (line: string) => playbook.filter((s) => s.line === line).length;
+    expect(playbook).toHaveLength(11);
+    expect([count("goalkeeper"), count("defence"), count("midfield"), count("attack")]).toEqual([1, 4, 3, 3]);
+    expect(new Set(playbook.map((s) => s.id)).size).toBe(11);
+  });
+
+  it("only uses existing capability groups", async () => {
+    const { playbook, profile } = await import("@/content");
+    const groups = new Set(profile.capabilities.map((c) => c.title));
+    for (const skill of playbook) expect(groups.has(skill.group), skill.id).toBe(true);
+  });
+});

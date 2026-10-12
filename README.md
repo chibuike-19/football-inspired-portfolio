@@ -34,7 +34,7 @@ All feel-related numbers (speed, acceleration, friction, camera height and dista
 - `core/journey.ts`: pure scroll-to-station mapping (with hysteresis) and camera transition planning (designed route to the next chapter, short direct jumps otherwise, instant with reduced motion). Unit-tested.
 - `world/journey/stations.ts`: every resting point (camera pose, ball spot, scoreboard text, highlighted object, panel). Edit here to re-frame a chapter.
 - `world/journey/JourneyLayer.tsx`: native scrolling (one viewport per station), chapter navigation, panels. `JourneyCamera.tsx` moves the camera and ball from the shared store state.
-- Trophy cabinet content: `content/trophies.ts`.
+- Trophy cabinet content: `content/trophies.ts`. Playbook "Starting XI": `content/playbook.ts` (skills) and `world/journey/formation.ts` (positions).
 
 To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `setExperience("journey" | "freeplay")`, `pick(clientX, clientY)`, `renderer()`) for browser tests, and accept `?quality=high|medium|low` to force a tier. All of this is compiled out of normal builds.
 

@@ -1,7 +1,9 @@
 "use client";
 
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { BackSide, Color, ShaderMaterial, type DirectionalLight } from "three";
+import { BackSide, Color, ShaderMaterial, type DirectionalLight, type Group, type Light } from "three";
+import { useWorldStore } from "@/state/store";
 import { GROUND } from "./layout";
 
 /** Night sky dome: vertical gradient with a faint floodlight haze at the horizon. */
@@ -46,9 +48,38 @@ function SkyDome() {
  * One shadow-casting key light from a floodlight corner, plus hemisphere and
  * cool fill (SPEC §6.2). The shadow frustum covers the ground only.
  */
-export function Lighting({ shadows, shadowMapSize }: { shadows: boolean; shadowMapSize: number }) {
+const LIGHT_RAMP_SECONDS = 2.4;
+
+/**
+ * Brings the stadium lights up from 20% to full. Lights are declared at full
+ * strength; the first call records that and dims them before the first frame
+ * renders. Mutates lights by design, so kept outside React.
+ */
+function rampLights(group: Group, progress: number) {
+  const level = 0.2 + 0.8 * (1 - Math.pow(1 - Math.min(1, progress), 3));
+  group.traverse((object) => {
+    const light = object as Light;
+    if (!light.isLight) return;
+    light.userData.baseIntensity ??= light.intensity;
+    light.intensity = light.userData.baseIntensity * level;
+  });
+}
+
+export function Lighting({
+  shadows,
+  shadowMapSize,
+  introRamp = false,
+}: {
+  shadows: boolean;
+  shadowMapSize: number;
+  /** Journey opening (spec transition 01): stadium lights illuminate gradually. */
+  introRamp?: boolean;
+}) {
   const extent = Math.max(GROUND.halfX, GROUND.halfZ) + 2;
   const key = useRef<DirectionalLight>(null);
+  const lights = useRef<Group>(null);
+  const ramp = useRef(introRamp ? 0 : 1);
+  const invalidate = useThree((state) => state.invalidate);
   // A new map size only takes effect once the old shadow map is released.
   useEffect(() => {
     const shadow = key.current?.shadow;
@@ -57,30 +88,42 @@ export function Lighting({ shadows, shadowMapSize }: { shadows: boolean; shadowM
     shadow.map?.dispose();
     shadow.map = null;
   }, [shadowMapSize]);
+
+  useFrame((_, delta) => {
+    if (ramp.current >= 1 || !lights.current) return;
+    // Hold the dim start until the stadium is on screen, then bring the lights up.
+    const visible = useWorldStore.getState().status === "ready";
+    if (visible) ramp.current = Math.min(1, ramp.current + Math.min(delta, 0.05) / LIGHT_RAMP_SECONDS);
+    rampLights(lights.current, ramp.current);
+    if (visible) invalidate();
+  });
+
   return (
     <>
       <color attach="background" args={["#070a0d"]} />
       <fog attach="fog" args={["#0b1014", 70, 170]} />
       <SkyDome />
-      <hemisphereLight args={["#b9cde0", "#0d2a17", 0.75]} />
-      <ambientLight intensity={0.12} />
-      <directionalLight
-        ref={key}
-        position={[-28, 42, 22]}
-        intensity={2.6}
-        color="#fff3dc"
-        castShadow={shadows}
-        shadow-mapSize={[shadowMapSize, shadowMapSize]}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.03}
-        shadow-camera-left={-extent}
-        shadow-camera-right={extent}
-        shadow-camera-top={extent}
-        shadow-camera-bottom={-extent}
-        shadow-camera-near={10}
-        shadow-camera-far={120}
-      />
-      <directionalLight position={[30, 28, -26]} intensity={0.7} color="#cfe0ff" />
+      <group ref={lights}>
+        <hemisphereLight args={["#b9cde0", "#0d2a17", 0.75]} />
+        <ambientLight intensity={0.12} />
+        <directionalLight
+          ref={key}
+          position={[-28, 42, 22]}
+          intensity={2.6}
+          color="#fff3dc"
+          castShadow={shadows}
+          shadow-mapSize={[shadowMapSize, shadowMapSize]}
+          shadow-bias={-0.0004}
+          shadow-normalBias={0.03}
+          shadow-camera-left={-extent}
+          shadow-camera-right={extent}
+          shadow-camera-top={extent}
+          shadow-camera-bottom={-extent}
+          shadow-camera-near={10}
+          shadow-camera-far={120}
+        />
+        <directionalLight position={[30, 28, -26]} intensity={0.7} color="#cfe0ff" />
+      </group>
     </>
   );
 }
