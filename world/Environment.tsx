@@ -3,6 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, Color, ShaderMaterial, type DirectionalLight, type Group, type Light } from "three";
+import { damp } from "@/core/math";
 import { useWorldStore } from "@/state/store";
 import { GROUND } from "./layout";
 
@@ -49,19 +50,23 @@ function SkyDome() {
  * cool fill (SPEC §6.2). The shadow frustum covers the ground only.
  */
 const LIGHT_RAMP_SECONDS = 2.4;
+const WARM = new Color("#ffcc94");
 
 /**
- * Brings the stadium lights up from 20% to full. Lights are declared at full
- * strength; the first call records that and dims them before the first frame
- * renders. Mutates lights by design, so kept outside React.
+ * Applies light levels. Lights are declared at full strength; the first call
+ * records that (and the base colour) and every call scales from it:
+ * `ramp` 0→1 brings the stadium up from 20% (opening shot), `mood` 0→1 dims
+ * and warms it for full time. Mutates lights by design, so kept outside React.
  */
-function rampLights(group: Group, progress: number) {
-  const level = 0.2 + 0.8 * (1 - Math.pow(1 - Math.min(1, progress), 3));
+function applyLights(group: Group, ramp: number, mood: number) {
+  const level = (0.2 + 0.8 * (1 - Math.pow(1 - Math.min(1, ramp), 3))) * (1 - 0.18 * mood);
   group.traverse((object) => {
     const light = object as Light;
     if (!light.isLight) return;
     light.userData.baseIntensity ??= light.intensity;
+    light.userData.baseColor ??= light.color.clone();
     light.intensity = light.userData.baseIntensity * level;
+    light.color.copy(light.userData.baseColor).lerp(WARM, 0.45 * mood);
   });
 }
 
@@ -89,12 +94,21 @@ export function Lighting({
     shadow.map = null;
   }, [shadowMapSize]);
 
+  const mood = useRef(0);
+  const closing = useWorldStore((state) => state.stadiumMood === "closing");
+  useEffect(() => invalidate(), [closing, invalidate]);
+
   useFrame((_, delta) => {
-    if (ramp.current >= 1 || !lights.current) return;
+    if (!lights.current) return;
+    const dt = Math.min(delta, 0.05);
+    const moodTarget = closing ? 1 : 0;
+    if (ramp.current >= 1 && Math.abs(mood.current - moodTarget) < 0.002) return;
     // Hold the dim start until the stadium is on screen, then bring the lights up.
     const visible = useWorldStore.getState().status === "ready";
-    if (visible) ramp.current = Math.min(1, ramp.current + Math.min(delta, 0.05) / LIGHT_RAMP_SECONDS);
-    rampLights(lights.current, ramp.current);
+    if (visible && ramp.current < 1) ramp.current = Math.min(1, ramp.current + dt / LIGHT_RAMP_SECONDS);
+    mood.current = useWorldStore.getState().reducedMotion ? moodTarget : damp(mood.current, moodTarget, 1.6, dt);
+    if (Math.abs(mood.current - moodTarget) < 0.002) mood.current = moodTarget;
+    applyLights(lights.current, ramp.current, mood.current);
     if (visible) invalidate();
   });
 

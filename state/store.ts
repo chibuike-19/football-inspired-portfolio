@@ -58,6 +58,9 @@ interface WorldState {
   setPanelDelay: (seconds: number) => void;
   scoreboard: ScoreboardText | null;
   setScoreboard: (text: ScoreboardText | null) => void;
+  /** Stadium lighting mood: "closing" dims and warms the lights at full time. */
+  stadiumMood: "match" | "closing";
+  setStadiumMood: (mood: "match" | "closing") => void;
   /** Selected skill marker in the playbook (hover, focus or tap). */
   playbookSkill: string | null;
   setPlaybookSkill: (id: string | null) => void;
@@ -110,6 +113,8 @@ export const useWorldStore = create<WorldState>()((set) => ({
   setPanelDelay: (panelDelay) => set({ panelDelay }),
   scoreboard: null,
   setScoreboard: (scoreboard) => set({ scoreboard }),
+  stadiumMood: "match",
+  setStadiumMood: (stadiumMood) => set({ stadiumMood }),
   playbookSkill: null,
   setPlaybookSkill: (playbookSkill) => set({ playbookSkill }),
   autopilot: null,

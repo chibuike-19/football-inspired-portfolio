@@ -36,12 +36,27 @@ export interface StationCamera {
   /** Waypoints used when arriving from the previous chapter, for spatial continuity. */
   via?: Pose[];
   /**
-   * Waypoints used whenever this station is reached from another chapter
-   * (e.g. the tunnel mouth), so the camera never passes through walls.
+   * Routes used whenever this station is reached from another chapter, so the
+   * camera never passes through walls. The first route whose `from` includes
+   * the departing chapter wins; a route without `from` is the default.
    */
-  enter?: Pose[];
-  /** Waypoints used when leaving for any chapter other than the next one (e.g. back out of the tunnel). */
-  exit?: Pose[];
+  enter?: EnterRoute[];
+  /** Waypoints used when leaving for another chapter, except the chapters listed (reached directly). */
+  exit?: { points: Pose[]; except?: ChapterId[] };
+  /** Seconds for moves between stations of this chapter (default WITHIN_CHAPTER). */
+  withinDuration?: number;
+}
+
+export interface EnterRoute {
+  from?: ChapterId[];
+  points: Pose[];
+}
+
+/** The entry route for arriving from `fromChapter`, if any. */
+export function enterRoute(to: StationCamera, fromChapter: ChapterId | null): Pose[] {
+  const routes = to.enter ?? [];
+  const match = routes.find((r) => fromChapter !== null && r.from?.includes(fromChapter)) ?? routes.find((r) => !r.from);
+  return match?.points ?? [];
 }
 
 export const JOURNEY_TIMING = {
@@ -59,6 +74,10 @@ export const JOURNEY_TIMING = {
   HYSTERESIS: 0.12,
   /** Direct jumps longer than this arc upwards so they never cut through the stands. */
   ARC_MIN_DISTANCE: 15,
+  /** Routed moves (through openings) travel at about this speed (units/s)… */
+  ROUTE_SPEED: 22,
+  /** …but never take longer than this. */
+  ROUTE_MAX: 2.6,
 } as const;
 
 /**
@@ -107,7 +126,7 @@ export function planTransition(
 
   if (kind === "intro") duration = JOURNEY_TIMING.INTRO;
   else if (kind === "replay") duration = JOURNEY_TIMING.REPLAY;
-  else if (gap === 0) duration = JOURNEY_TIMING.WITHIN_CHAPTER;
+  else if (gap === 0) duration = to.withinDuration ?? JOURNEY_TIMING.WITHIN_CHAPTER;
   else if (gap === 1 && !options.interrupted && chapterIndex(to.chapter) > chapterIndex(fromChapter!)) {
     // Forward into the next chapter: take the designed route.
     duration = JOURNEY_TIMING.NEXT_CHAPTER;
@@ -118,12 +137,17 @@ export function planTransition(
 
   // Enclosed spaces: leave and enter through their openings.
   const changingChapter = gap > 0 && kind === "move";
-  const forwardNext = fromChapter !== null && chapterIndex(to.chapter) === chapterIndex(fromChapter) + 1;
-  const exit = changingChapter && !forwardNext ? (options.from?.exit ?? []) : [];
-  const enter = changingChapter ? (to.enter ?? []) : [];
+  const exitRoute = options.from?.exit;
+  const exit =
+    changingChapter && exitRoute && !(exitRoute.except ?? []).includes(to.chapter) ? exitRoute.points : [];
+  const enter = changingChapter ? enterRoute(to, fromChapter) : [];
   if (exit.length > 0 || enter.length > 0) {
     via = [...exit, ...(enter.length > 0 ? enter : via)];
-    duration = Math.max(duration, JOURNEY_TIMING.NEXT_CHAPTER);
+    // Pace by distance, so long routes (e.g. over the stand) aren't rushed.
+    const points = [current, ...via, to.pose];
+    let length = 0;
+    for (let i = 1; i < points.length; i++) length += distance(points[i - 1], points[i]);
+    duration = Math.min(JOURNEY_TIMING.ROUTE_MAX, Math.max(duration, JOURNEY_TIMING.NEXT_CHAPTER, length / JOURNEY_TIMING.ROUTE_SPEED));
   }
 
   if (via.length === 0 && distance(current, to.pose) > JOURNEY_TIMING.ARC_MIN_DISTANCE) {

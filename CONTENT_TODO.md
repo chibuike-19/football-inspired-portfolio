@@ -19,8 +19,6 @@ Until resolved, the site hides or omits these items rather than inventing values
 - [ ] A larger photo (512 px or more) would make the hero tile sharper on high-density screens; the current one is 200 px (`public/avatar.jpg`, also the favicon source).
 
 ## Journey (3D) — open items
-- [ ] Phones: Playbook and Career Highlights have portrait framing; step 6 adds it for the remaining chapters.
-- [ ] Trophy chapter uses placeholder camera positions until the trophy room (step 5) is built; the move from the tunnel to them is temporary.
 
 ## Optional
 - [ ] Project screenshots. DevSpot: any you can share. FCMB: only with client permission. Otherwise boards stay typographic.

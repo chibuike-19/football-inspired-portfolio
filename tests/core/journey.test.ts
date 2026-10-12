@@ -92,7 +92,7 @@ describe("enclosed spaces (tunnel)", () => {
   const mouth = pose(34, 2, -10, 40, 2, -10);
   const inside = pose(38, 1.7, -10, 41, 1.6, -9);
   const back = pose(35, 2, -10, 28, 2, -10);
-  const tunnel = { chapter: "journey" as const, pose: inside, enter: [mouth], exit: [back] };
+  const tunnel = { chapter: "journey" as const, pose: inside, enter: [{ points: [mouth] }], exit: { points: [back], except: ["trophies" as const] } };
   const trophies = station("trophies", pose(56, 2, -10, 60, 2, -10));
   const kickoff = station("kickoff", pose(0, 15, 31, 0, 2, -9));
 
@@ -111,6 +111,28 @@ describe("enclosed spaces (tunnel)", () => {
   it("does not turn back when continuing forward to the next chapter", () => {
     const t = planTransition(inside, "journey", trophies, { interrupted: false, reducedMotion: false, from: tunnel });
     expect(t.points.some((p) => close(p, back))).toBe(false);
+  });
+
+  it("picks the entry route by origin (doors from the tunnel, outside opening otherwise)", () => {
+    const doorway = pose(51, 1.75, -10, 56, 1.6, -10);
+    const opening = pose(63, 2, -18, 63, 1.6, -12);
+    const room = {
+      chapter: "trophies" as const,
+      pose: pose(55, 1.75, -11, 58, 1.3, -6),
+      enter: [{ from: ["journey" as const], points: [doorway] }, { points: [opening] }],
+    };
+    const fromTunnel = planTransition(inside, "journey", room, { interrupted: false, reducedMotion: false, from: tunnel });
+    expect(fromTunnel.points.some((p) => close(p, doorway))).toBe(true);
+    expect(fromTunnel.points.some((p) => close(p, opening))).toBe(false);
+    const fromKickoff = planTransition(pose(0, 15, 31), "kickoff", room, { interrupted: false, reducedMotion: false });
+    expect(fromKickoff.points.some((p) => close(p, opening))).toBe(true);
+  });
+
+  it("paces long routed moves by distance, within the cap", () => {
+    const far = { chapter: "fulltime" as const, pose: pose(0, 22, 30, 0, 1, -6), enter: [{ points: [pose(60, 15, -22), pose(40, 17, -6)] }] };
+    const t = planTransition(pose(64, 1.7, -11), "trophies", far, { interrupted: false, reducedMotion: false });
+    expect(t.duration).toBeGreaterThan(JOURNEY_TIMING.NEXT_CHAPTER);
+    expect(t.duration).toBeLessThanOrEqual(JOURNEY_TIMING.ROUTE_MAX);
   });
 
   it("moves between stops inside without waypoints", () => {

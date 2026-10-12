@@ -3,7 +3,7 @@ import type { ChapterId, Pose, StationCamera } from "@/core/journey";
 import type { ScoreboardText } from "@/state/store";
 import { formatRange } from "@/lib/format";
 import { LANDMARK_BY_ID } from "../landmarks";
-import { GROUND, TUNNEL } from "../layout";
+import { ROOM, TUNNEL } from "../layout";
 
 /**
  * The journey as a list of stations (owner spec, 2026-10-12). Each station is a
@@ -54,12 +54,16 @@ export function tunnelStop(i: number, count: number): number {
   return count <= 1 ? last : first + ((last - first) * i) / (count - 1);
 }
 
+/** Trophy display (x) for trophy `i`. */
+export const trophyDisplay = (i: number) => ROOM.firstDisplay + i * ROOM.displaySpacing;
+
 /** Where the ball starts before rolling towards the centre circle. */
 export const BALL_START = { x: -14, z: 9 };
 
 const KICKOFF_POSE = pose(0, 15, 31, 0, 2, -9);
-// Inside the bowl, above the south stand front, so its roof stays out of frame.
-const FULLTIME_POSE = pose(0, 22, 30, 0, 1, -6);
+// High behind the south touchline, level enough that the pitch, the ball on the
+// centre spot and the scoreboard above the north stand are all in frame.
+const FULLTIME_POSE = pose(0, 17, 33, 0, 4.5, -12);
 
 /**
  * Portrait screens: further back and aimed at the ground in front of the
@@ -93,6 +97,8 @@ function build(): JourneyStation[] {
     chapter: "kickoff",
     label: "Kickoff",
     pose: KICKOFF_POSE,
+    // Phones: higher and looking down, so pitch and ball sit above the sheet.
+    portrait: pose(0, 24, 26, 0, 0, 7),
     ball: { x: -3.5, z: 3 },
     scoreboard: null,
     highlight: null,
@@ -106,6 +112,7 @@ function build(): JourneyStation[] {
     label: "Meet the player",
     // Lower and closer to the centre circle; the scoreboard stays in view above.
     pose: pose(1.6, 3.6, 8.5, 0, 4.5, -20),
+    portrait: pose(0, 8, 13, 0, 0, 5),
     ball: { x: 0, z: 0 },
     scoreboard: { kicker: "The starting XI", title: `Player 01 — ${profile.name}`, lines: [profile.headline] },
     highlight: "profile",
@@ -167,8 +174,9 @@ function build(): JourneyStation[] {
       // Looking down the corridor, angled slightly towards the company's wall sign.
       pose: pose(x - 3.4, 1.65, zc - 0.55, x + 2.6, 1.5, zc + 0.95),
       portrait: pose(x - 4.4, 2.1, zc - 0.7, x + 1.2, 1.25, zc + 1.0),
-      enter: tunnelEnter,
-      exit: tunnelExit,
+      enter: [{ points: tunnelEnter }],
+      // Forward into the trophy room goes straight through the doors.
+      exit: { points: tunnelExit, except: ["trophies"] },
       ball: { x: tunnel.position[0], z: tunnel.position[1] },
       scoreboard: { kicker: "Match history", title: entry.company, lines: [`${position.title} · ${formatRange(position)}`] },
       highlight: "resume",
@@ -183,14 +191,40 @@ function build(): JourneyStation[] {
     });
   });
 
-  // Trophy cabinet. Placeholder poses (elevated, looking back over the pitch)
-  // until the trophy room is built (journey step 5).
+  // Trophy cabinet: one display per trophy along the room's south wall.
+  const rz = ROOM.z;
+  const doorway = [pose(TUNNEL.end - 1.2, 1.75, zc, TUNNEL.end + 4, 1.6, zc)];
+  // Routes between the room's north opening and the stadium, over the east stand.
+  // Separate poses per direction so the camera always faces where it is going.
+  const ox = (ROOM.openingStart + ROOM.openingEnd) / 2;
+  const northWall = ROOM.z - ROOM.halfWidth;
+  const inbound = [
+    pose(40, 17, -6, 62, 2, -16),
+    pose(58, 15, northWall - 7, ox, 1.6, rz),
+    pose(ox, 2.6, northWall - 3.5, ox, 1.6, rz),
+    pose(ox, 1.9, northWall + 1.4, ox + 2, 1.5, rz + 3),
+  ];
+  const outbound = [
+    pose(ox, 1.9, northWall + 1.4, ox, 2, northWall - 6),
+    pose(ox, 2.8, northWall - 3.5, 40, 6, -14),
+    pose(58, 15, northWall - 7, 30, 2, -6),
+    pose(40, 17, -6, 4, 0, -4),
+  ];
+  const trophyExit = { points: outbound, except: ["journey", "fulltime"] as ChapterId[] };
   trophies.forEach((trophy, i) => {
+    const x = trophyDisplay(i);
     list.push({
       id: `trophy:${trophy.id}`,
       chapter: "trophies",
       label: `Trophies · ${trophy.title}`,
-      pose: pose(GROUND.halfX + 6, 12, -8 + i * 3.5, 6, 1, -4 + i * 2.5),
+      pose: pose(x - 2.5, 1.75, rz - 1.4, x + 0.5, 1.4, rz + ROOM.halfWidth - 1.4),
+      portrait: pose(x - 3.4, 2.4, rz - 2.8, x + 0.2, 1.1, rz + ROOM.halfWidth - 1.4),
+      enter: [
+        { from: ["journey"], points: doorway },
+        { points: inbound },
+      ],
+      exit: trophyExit,
+      withinDuration: 1.1,
       ball: { x: tunnel.position[0], z: tunnel.position[1] },
       scoreboard: { kicker: "Trophy cabinet", title: trophy.title, lines: [trophy.context] },
       highlight: null,
@@ -205,10 +239,14 @@ function build(): JourneyStation[] {
     chapter: "fulltime",
     label: "Full time",
     pose: FULLTIME_POSE,
+    portrait: pose(0, 30, 30, 0, 0, 13),
     via: [pose(20, 30, 26, 4, 2, -4)],
+    // From the trophy room: turn to the opening, step outside, rise over the east stand
+    // and let the pitch come into view (spec transition 07).
+    enter: [{ from: ["trophies"], points: outbound }],
     // The ball returns to the centre circle: the journey ends where it started.
     ball: { x: 0, z: 0 },
-    scoreboard: { kicker: "Full time", title: "The next match starts here", lines: ["Let's build something great together"] },
+    scoreboard: { kicker: "Final whistle", title: "Full time", lines: ["The next match starts here"] },
     highlight: "profile",
     panel: { kind: "fulltime" },
     side: "left",

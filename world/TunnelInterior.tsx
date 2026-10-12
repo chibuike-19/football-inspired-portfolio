@@ -161,12 +161,15 @@ function EndDoors() {
   const spill = useRef<MeshBasicMaterial>(null);
   const open = useRef(0);
   const invalidate = useThree((s) => s.invalidate);
-  const target = useWorldStore((s) => (STATIONS[s.journeyStation]?.chapter === "trophies" ? 1 : 0));
+  const inTrophies = useWorldStore((s) => STATIONS[s.journeyStation]?.chapter === "trophies");
   const reducedMotion = useWorldStore((s) => s.reducedMotion);
   const textures = useMemo(() => [createDoorTexture(true), createDoorTexture(false), createSpillTexture()], []);
   useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
-  useEffect(() => invalidate(), [target, invalidate]);
-  useFrame((_, delta) => {
+  useEffect(() => invalidate(), [inTrophies, invalidate]);
+  useFrame(({ camera }, delta) => {
+    // Open for the trophy room, and while the camera is passing through the doorway either way.
+    const nearDoors = camera.position.x > TUNNEL.end - 3.5 && Math.abs(camera.position.z - TUNNEL.z) < 3 && camera.position.y < 4;
+    const target = inTrophies || nearDoors ? 1 : 0;
     if (Math.abs(open.current - target) < 0.001) return;
     open.current = reducedMotion ? target : damp(open.current, target, 3.2, Math.min(delta, 0.05));
     const slide = open.current * (W / 2);
@@ -178,11 +181,6 @@ function EndDoors() {
   });
   return (
     <group position={[TUNNEL.end, 0, TUNNEL.z]}>
-      {/* The lit room beyond (the trophy room proper arrives in journey step 5). */}
-      <mesh position={[0.6, H / 2, 0]} rotation-y={-Math.PI / 2}>
-        <planeGeometry args={[W, H]} />
-        <meshBasicMaterial color="#ffcf8a" toneMapped={false} />
-      </mesh>
       {/* Leaves face back down the corridor (-x). */}
       {[
         [left, -W / 4, textures[0]],
@@ -243,7 +241,8 @@ export function TunnelInterior() {
   const lights = Math.floor(LENGTH / LIGHT_SPACING);
   // Behind the east stand's back wall, the corridor runs through a low annex.
   const annexStart = GROUND.halfX + STAND.gap + STAND.rows * STAND.rowDepth + 0.6;
-  const annexEnd = TUNNEL.end + 1;
+  // The trophy room's west wall closes the annex at the doors.
+  const annexEnd = TUNNEL.end;
   const annexWidth = W + 0.6;
   const annexHeight = H + 0.5;
 
@@ -296,10 +295,6 @@ export function TunnelInterior() {
             <meshStandardMaterial color="#1c2226" roughness={0.9} />
           </mesh>
         ))}
-        <mesh position={[annexEnd, annexHeight / 2, zc]} rotation-y={Math.PI / 2}>
-          <planeGeometry args={[annexWidth, annexHeight]} />
-          <meshStandardMaterial color="#1c2226" roughness={0.9} />
-        </mesh>
       </group>
     </group>
   );

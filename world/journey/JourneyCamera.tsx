@@ -133,6 +133,7 @@ export function JourneyCamera({ ball, resume }: Props) {
       target.arriving && kind === "move" && fromChapterBefore !== null && chapterBefore(target.chapter) === fromChapterBefore;
     const shown = bridging ? target.arriving! : target;
     setScoreboard(shown.scoreboard);
+    useWorldStore.getState().setStadiumMood(station_.chapter === "fulltime" ? "closing" : "match");
     publishHighlight(shown.highlight, !bridging && target.dimBoards);
     pendingArrival.current = bridging ? target : null;
     // Content appears as the camera is arriving, not after it stops (spec §5).

@@ -66,3 +66,22 @@ export const TUNNEL = {
   /** Doors to the trophy room. */
   end: GROUND.halfX + STAND.gap + 16,
 } as const;
+
+/**
+ * Trophy room behind the tunnel doors, outside the stadium shell. Displays line
+ * the south (right-hand) wall; an opening in the north wall leads back outside.
+ */
+export const ROOM = {
+  start: TUNNEL.end + 0.3,
+  end: TUNNEL.end + 17.5,
+  z: TUNNEL.z,
+  halfWidth: 6,
+  height: 5.5,
+  /** Opening in the north wall: x range. */
+  openingStart: TUNNEL.end + 9.7,
+  openingEnd: TUNNEL.end + 13.3,
+  openingHeight: 3.4,
+  /** First display (x) and spacing. */
+  firstDisplay: TUNNEL.end + 3.6,
+  displaySpacing: 3,
+} as const;
