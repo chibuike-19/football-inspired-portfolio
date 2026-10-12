@@ -81,3 +81,17 @@ export const AUTOPILOT = {
   /** Give up after this long (e.g. something blocks the way). */
   TIMEOUT: 8,
 } as const;
+
+/** Runtime quality adaptation (SPEC §11.2). Measured on active frames only. */
+export const PERFORMANCE = {
+  /** Frames per measurement window. */
+  WINDOW: 90,
+  /** A window averaging below this is "slow". */
+  MIN_FPS: 45,
+  /** Slow windows in a row before stepping quality down. */
+  STRIKES: 2,
+  /** Seconds of active frames ignored after start or a quality change (shader compiles, uploads). */
+  WARMUP: 2,
+  /** A frame this long means the loop was idle; it is not a measurement. */
+  IDLE_GAP: 0.25,
+} as const;

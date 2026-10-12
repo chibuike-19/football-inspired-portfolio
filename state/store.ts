@@ -43,6 +43,10 @@ interface WorldState {
   setMode: (mode: Mode) => void;
   setStatus: (status: WorldStatus) => void;
   setQuality: (quality: Quality) => void;
+  /** Steps quality down one level; at the lowest level, offers Classic view instead. */
+  degrade: () => void;
+  slowNotice: boolean;
+  dismissSlowNotice: () => void;
   setReadyLate: (readyLate: boolean) => void;
   fail: (reason: string) => void;
 }
@@ -74,6 +78,12 @@ export const useWorldStore = create<WorldState>()((set) => ({
   setMode: (mode) => set({ mode }),
   setStatus: (status) => set({ status }),
   setQuality: (quality) => set({ quality }),
+  degrade: () =>
+    set((state) =>
+      state.quality === "high" ? { quality: "medium" } : state.quality === "medium" ? { quality: "low" } : { slowNotice: true },
+    ),
+  slowNotice: false,
+  dismissSlowNotice: () => set({ slowNotice: false }),
   setReadyLate: (readyLate) => set({ readyLate }),
   fail: (reason) => set({ status: "failed", failureReason: reason, mode: "classic" }),
 }));

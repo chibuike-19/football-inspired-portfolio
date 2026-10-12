@@ -1,13 +1,16 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { PCFShadowMap, type Mesh } from "three";
 import { CAMERA } from "@/core/config";
 import { createSimulation, type Simulation } from "@/core/simulation";
 import { gameOwnsKeyboard } from "@/core/input";
-import { useWorldStore, type MotionSetting } from "@/state/store";
+import { useWorldStore, type MotionSetting, type Quality } from "@/state/store";
+import { buttonStyles } from "@/ui/primitives";
+import { writeViewPreference } from "./capability";
 import { Ball } from "./Ball";
+import { BlobShadow } from "./BlobShadow";
 import { createInputController } from "./input";
 import { Joystick } from "./Joystick";
 import { BALL } from "./layout";
@@ -53,6 +56,7 @@ function DebugCamera({ values }: { values: number[] }) {
 /** Debug builds only: `window.__world` for Playwright (SPEC §15.2). */
 function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
   const invalidate = useThree((state) => state.invalidate);
+  const get = useThree((state) => state.get);
   useEffect(() => {
     if (!DEBUG) return;
     const hook = {
@@ -61,6 +65,10 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
         return { ball: { ...simulation.ball }, activeLandmarkId, expandedId, autopilot, reducedMotion };
       },
       pick: (clientX: number, clientY: number) => pick()?.(clientX, clientY) ?? null,
+      renderer: () => {
+        const { gl } = get();
+        return { calls: gl.info.render.calls, triangles: gl.info.render.triangles, ...gl.info.memory, quality: useWorldStore.getState().quality };
+      },
       setBall: (x: number, z: number) => {
         simulation.place(x, z);
         invalidate();
@@ -70,7 +78,7 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
     return () => {
       delete (window as unknown as { __world?: typeof hook }).__world;
     };
-  }, [simulation, invalidate, pick]);
+  }, [simulation, invalidate, pick, get]);
 }
 
 function DebugHook({ simulation, pick }: { simulation: Simulation; pick: () => TapPicker | null }) {
@@ -122,6 +130,8 @@ function ContextLossGuard() {
 }
 
 const MOTION_KEY = "fp:motion";
+/** Scene build stages; the world is marked ready after the last one. */
+const SCENE_STAGES = 5;
 
 function readMotionSetting(): MotionSetting {
   try {
@@ -156,9 +166,48 @@ function useMotion(): boolean {
   return effective;
 }
 
+/** Debug builds only: `?quality=high|medium|low` forces a tier. */
+function readDebugQuality(): Quality | null {
+  if (!DEBUG) return null;
+  const value = new URLSearchParams(window.location.search).get("quality");
+  return value === "high" || value === "medium" || value === "low" ? value : null;
+}
+
+/** Offered when even the lowest quality is too slow (SPEC §11.2). Never forces a switch. */
+function SlowNotice() {
+  const show = useWorldStore((state) => state.slowNotice);
+  const dismiss = useWorldStore((state) => state.dismissSlowNotice);
+  if (!show) return null;
+  const switchToClassic = () => {
+    writeViewPreference("classic");
+    dismiss();
+    useWorldStore.getState().setMode("classic");
+  };
+  return (
+    <div role="status" data-ui className="slow-notice">
+      <p>The 3D stadium is running slowly on this device.</p>
+      <div className="flex gap-2">
+        <button type="button" onClick={switchToClassic} className={`${buttonStyles.primary} min-h-10 px-3 py-2 text-xs`}>
+          Switch to Classic view
+        </button>
+        <button type="button" onClick={dismiss} className={`${buttonStyles.secondary} min-h-10 px-3 py-2 text-xs`}>
+          Keep 3D
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function World() {
+  const setQuality = useWorldStore((state) => state.setQuality);
+  useEffect(() => {
+    const forced = readDebugQuality();
+    if (forced) setQuality(forced);
+  }, [setQuality]);
   const quality = useWorldStore((state) => state.quality);
   const settings = QUALITY[quality];
+  // The renderer's shadow setting is fixed at creation; lower tiers just stop the light casting.
+  const [canvasShadows] = useState(() => QUALITY[readDebugQuality() ?? quality].shadows);
   const reducedMotion = useMotion();
   const [debugCamera] = useState(readDebugCamera);
   // Deep link (SPEC §10.6): start at that landmark with its panel open.
@@ -213,15 +262,21 @@ export default function World() {
     [openPanel],
   );
 
-  // Canvas textures draw text, so wait for the page fonts first.
-  const [fontsReady, setFontsReady] = useState(false);
+  // Build the scene in stages, one per task, so no single long task blocks the page
+  // (SPEC §16). Canvas textures draw text, so the first stage waits for page fonts.
+  const [stage, setStage] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    loadCanvasFonts().then(() => !cancelled && setFontsReady(true));
+    loadCanvasFonts().then(() => !cancelled && startTransition(() => setStage(1)));
     return () => {
       cancelled = true;
     };
   }, []);
+  useEffect(() => {
+    if (stage === 0 || stage >= SCENE_STAGES) return;
+    const timer = window.setTimeout(() => startTransition(() => setStage((s) => s + 1)), 0);
+    return () => window.clearTimeout(timer);
+  }, [stage]);
 
   return (
     <div className="relative h-full w-full">
@@ -237,7 +292,7 @@ export default function World() {
           aria-hidden="true"
           frameloop="demand"
           dpr={settings.dpr}
-          shadows={settings.shadows ? { type: PCFShadowMap } : false}
+          shadows={canvasShadows ? { type: PCFShadowMap } : false}
           gl={{ antialias: settings.antialias, powerPreference: "high-performance" }}
           camera={{ position: [0, CAMERA.HEIGHT, CAMERA.DISTANCE], fov: CAMERA.FOV, near: 0.5, far: 400 }}
         >
@@ -254,14 +309,19 @@ export default function World() {
             freeCamera={debugCamera !== null}
           />
           <PreviewTracker card={card} simulation={simulation} />
-          {fontsReady && (
+          {stage >= 1 && (
             <>
               <Pitch pixelsPerUnit={settings.pitchPixelsPerUnit} />
-              <Goals />
-              <Stadium crowdDensity={settings.crowdDensity} />
-              <Structures />
-              <GroundMarkers />
               <Ball ref={ball} />
+              {!settings.shadows && <BlobShadow ball={ball} />}
+            </>
+          )}
+          {stage >= 2 && <Goals />}
+          {stage >= 3 && <Stadium crowdDensity={settings.crowdDensity} />}
+          {stage >= 4 && <Structures />}
+          {stage >= 5 && (
+            <>
+              <GroundMarkers />
               <ReadySignal />
             </>
           )}
@@ -269,6 +329,7 @@ export default function World() {
         <Joystick surface={surface} input={input} onTap={onTap} />
         <PreviewCard card={card} />
         <Onboarding input={input} />
+        <SlowNotice />
         <DiscoveryAnnouncer />
       </div>
       <ExpandedPanel returnFocus={surface} />

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { BackSide, Color, ShaderMaterial } from "three";
+import { useEffect, useMemo, useRef } from "react";
+import { BackSide, Color, ShaderMaterial, type DirectionalLight } from "three";
 import { GROUND } from "./layout";
 
 /** Night sky dome: vertical gradient with a faint floodlight haze at the horizon. */
@@ -34,6 +34,7 @@ function SkyDome() {
       }),
     [],
   );
+  useEffect(() => () => material.dispose(), [material]);
   return (
     <mesh material={material} renderOrder={-1}>
       <sphereGeometry args={[180, 32, 16]} />
@@ -47,6 +48,15 @@ function SkyDome() {
  */
 export function Lighting({ shadows, shadowMapSize }: { shadows: boolean; shadowMapSize: number }) {
   const extent = Math.max(GROUND.halfX, GROUND.halfZ) + 2;
+  const key = useRef<DirectionalLight>(null);
+  // A new map size only takes effect once the old shadow map is released.
+  useEffect(() => {
+    const shadow = key.current?.shadow;
+    if (!shadow) return;
+    shadow.mapSize.set(shadowMapSize, shadowMapSize);
+    shadow.map?.dispose();
+    shadow.map = null;
+  }, [shadowMapSize]);
   return (
     <>
       <color attach="background" args={["#070a0d"]} />
@@ -55,6 +65,7 @@ export function Lighting({ shadows, shadowMapSize }: { shadows: boolean; shadowM
       <hemisphereLight args={["#b9cde0", "#0d2a17", 0.75]} />
       <ambientLight intensity={0.12} />
       <directionalLight
+        ref={key}
         position={[-28, 42, 22]}
         intensity={2.6}
         color="#fff3dc"

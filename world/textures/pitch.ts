@@ -1,4 +1,5 @@
 import { GROUND, PITCH } from "../layout";
+import { seededRandom } from "../random";
 import { createCanvas, toTexture } from "./canvas";
 
 /**
@@ -29,11 +30,36 @@ export function createPitchTexture(pixelsPerUnit: number) {
   }
 
   // Grain: low-contrast speckle so close-ups don't look flat.
-  const grains = Math.round((width * height) / 90);
-  for (let i = 0; i < grains; i++) {
-    const shade = Math.random() < 0.5 ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.035)";
-    ctx.fillStyle = shade;
-    ctx.fillRect(Math.random() * width, Math.random() * height, 2, 2);
+  // Drawn as one tiled noise pattern: a single fill instead of tens of thousands.
+  const random = seededRandom(7);
+  const tile = createCanvas(256, 256);
+  for (let i = 0; i < (256 * 256) / 90; i++) {
+    tile.ctx.fillStyle = random() < 0.5 ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.035)";
+    tile.ctx.fillRect(Math.floor(random() * 256), Math.floor(random() * 256), 2, 2);
+  }
+  const grain = ctx.createPattern(tile.canvas, "repeat");
+  if (grain) {
+    ctx.fillStyle = grain;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // Floodlight pools: the four corner towers light the pitch unevenly, brightest
+  // where their beams overlap in the middle. Baked here instead of real lights.
+  const pool = (cx: number, cz: number, radius: number, alpha: number) => {
+    const g = ctx.createRadialGradient(px(cx), pz(cz), 0, px(cx), pz(cz), u(radius));
+    g.addColorStop(0, `rgba(255, 250, 225, ${alpha})`);
+    g.addColorStop(1, "rgba(255, 250, 225, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  };
+  pool(0, 0, PITCH.halfLength * 0.9, 0.07);
+  for (const [cx, cz] of [
+    [-0.55, -0.5],
+    [0.55, -0.5],
+    [-0.55, 0.5],
+    [0.55, 0.5],
+  ]) {
+    pool(cx * PITCH.halfLength, cz * PITCH.halfWidth, PITCH.halfWidth * 0.95, 0.045);
   }
 
   // Runoff is slightly darker and worn.

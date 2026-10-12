@@ -9,6 +9,7 @@ import { createDiscovery, stepDiscovery } from "@/core/discovery";
 import { AUTOPILOT, CAMERA, MOVEMENT } from "@/core/config";
 import { lerp } from "@/core/math";
 import { speed } from "@/core/movement";
+import { createPerformanceMonitor, recordFrame, resetPerformanceMonitor } from "@/core/performance";
 import type { Simulation } from "@/core/simulation";
 import { useWorldStore } from "@/state/store";
 import type { InputController } from "./input";
@@ -63,6 +64,10 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
   const rendered = useRef({ x: simulation.ball.x, z: simulation.ball.z });
   const idle = useRef(true);
   const discovery = useRef(createDiscovery(DISCOVERY_LANDMARKS));
+  const performanceMonitor = useRef(createPerformanceMonitor());
+  // New quality settings recompile shaders and re-upload textures: measure afresh.
+  const quality = useWorldStore((s) => s.quality);
+  useEffect(() => resetPerformanceMonitor(performanceMonitor.current), [quality]);
 
   // Wake the loop on input.
   useEffect(() => input.onChange(() => invalidate()), [input, invalidate]);
@@ -88,6 +93,8 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
   useFrame(({ camera }, delta) => {
     // After an idle period the clock delta is the whole idle time; treat it as one frame.
     const dt = idle.current ? 1 / 60 : Math.min(delta, MOVEMENT.MAX_FRAME_DT);
+    // Measure real frame intervals during continuous play only (SPEC §11.2).
+    if (!idle.current && !freeCamera && recordFrame(performanceMonitor.current, delta)) useWorldStore.getState().degrade();
     clock.current += dt;
     let direction = input.direction();
     const userInput = direction.x !== 0 || direction.z !== 0;

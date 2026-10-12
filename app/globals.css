@@ -384,3 +384,34 @@ html.reduce-motion .preview-card[data-state="out"] {
 html.reduce-motion .world-stage {
   transition: none;
 }
+
+.slow-notice {
+  position: absolute;
+  left: 50%;
+  top: calc(4.5rem + env(safe-area-inset-top));
+  z-index: 20;
+  translate: -50% 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  border: 1px solid var(--color-line);
+  border-radius: 0.9rem;
+  background: rgb(18 24 21 / 0.95);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+}
+
+/* Soft vignette over the stadium: draws the eye to the centre of play. Pure CSS, no post-processing. */
+.game-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 75% 70% at 50% 55%, transparent 55%, rgb(3 6 5 / 0.38) 100%);
+}

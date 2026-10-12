@@ -44,7 +44,7 @@ export function ResumeDetails({ compact = false }: { compact?: boolean }) {
           <ul className="mt-2 space-y-1 text-muted">
             {profile.languages.map((language) => (
               <li key={language.name}>
-                {language.name} <span className="text-muted/70">· {language.level}</span>
+                {language.name} <span className="text-muted">· {language.level}</span>
               </li>
             ))}
           </ul>

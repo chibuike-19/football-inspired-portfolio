@@ -521,18 +521,21 @@ No feature is reported as working unless it has been verified.
 
 ---
 
-## 16. Performance budgets (targets, verified in Phase 7)
+## 16. Performance budgets (measured in Phase 7)
 
-| Metric | Target |
-|---|---|
-| LCP (Layer 1) | < 2.0s on fast 4G |
-| JS before the canvas loads | < 180 KB gz (Next.js + React baseline measured at ~174 KB in Phase 2) |
-| 3D chunk | < 350 KB gz |
-| Total assets for the world | < 2 MB |
-| Draw calls | < 150 (high), < 80 (low) |
-| Frame rate | About 60 fps on a mid-range laptop at high/medium; graceful degradation otherwise |
+| Metric | Target | Measured (Phase 7) |
+|---|---|---|
+| LCP (Layer 1) | < 2.0s on fast 4G | 2.2–2.5s in Lighthouse mobile (slow 4G + 4× CPU, compressed server); 1.0s desktop |
+| JS before the canvas loads | < 180 KB gz | 183 KB gz (≈ 3 KB over; Next.js + React baseline is ≈ 174 KB) |
+| 3D chunk | < 350 KB gz | 264 KB gz |
+| Total assets for the world | < 2 MB | No downloaded assets; everything is procedural (JS only) |
+| Draw calls | < 150 (high), < 80 (low) | 84 (high/medium), 65 (low) |
+| Frame rate | ~60 fps mid-range laptop | 60 fps while moving at every tier (M-series Mac, DPR 2) |
+| Lighthouse | — | Mobile: Performance 83–85, Accessibility 100, Best Practices 100, SEO 100. Desktop Performance 98. Classic view mobile Performance 98 |
 
----
+Notes:
+- Remaining mobile blocking time (~500 ms at 4× CPU) is three.js start-up and first shader compilation. Scene construction is split across tasks (`world/World.tsx` stages) so no single task exceeds ~320 ms under throttling.
+- Quality steps down automatically on sustained slow frames (`core/performance.ts`), measured on active frames only so idle time never counts. Verified with a simulated 25 fps device: high → medium → low → Classic view offer.
 
 ## 17. Phases and exit criteria
 

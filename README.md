@@ -2,7 +2,7 @@
 
 A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-**Status:** Phase 6 complete. Explore by rolling the ball, or use the menu (Explore, Projects, Experience, Résumé, Contact) to dribble straight there. Enter, a tap on a landmark or "More details" opens a full panel; links like `/#contact` or `/#project/devspot` open the stadium at that landmark with its panel open. Visual polish and performance tuning come in Phase 7.
+**Status:** Phase 7 complete (polish and performance; see SPEC §16 for measured results). Phase 6: Explore by rolling the ball, or use the menu (Explore, Projects, Experience, Résumé, Contact) to dribble straight there. Enter, a tap on a landmark or "More details" opens a full panel; links like `/#contact` or `/#project/devspot` open the stadium at that landmark with its panel open. Visual polish and performance tuning come in Phase 7.
 
 ## Run
 
@@ -17,6 +17,10 @@ npm run typecheck  # run after a build or dev start (Next generates route types)
 
 Preview the static build: `npx serve out` (or any static file server).
 
+## Quality tiers
+
+`world/quality.ts` defines high / medium / low (pixel ratio, shadows, texture resolution, crowd density). Touch devices and machines with ≤ 4 CPU cores start at medium. During play, `core/performance.ts` steps quality down after sustained slow frames; at the lowest tier the visitor is offered Classic view (never forced).
+
 ## Tuning movement and camera
 
 All feel-related numbers (speed, acceleration, friction, camera height and distance, look-ahead, discovery radii, grace period, switch margin) live in `core/config.ts`. Landmark positions and per-landmark radii are in `world/landmarks.ts`. They supersede the starting values in SPEC §13.
@@ -29,7 +33,7 @@ All feel-related numbers (speed, acceleration, friction, camera height and dista
 - The world loads lazily after the HTML has painted. If it isn't ready in 15 s the page stays classic and offers "3D stadium ready: enter" when it finishes.
 - A render error or lost graphics context falls back to Classic view with a short notice.
 
-Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `pick(clientX, clientY)`) for browser tests.
+Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `pick(clientX, clientY)`, `renderer()`) for browser tests, and accept `?quality=high|medium|low` to force a tier.
 
 To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. This is compiled out of normal builds.
 

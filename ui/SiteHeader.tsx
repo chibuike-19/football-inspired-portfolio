@@ -14,7 +14,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ink/85 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-3 sm:gap-6">
-        <Link href="/#profile" className="flex shrink-0 items-center gap-2 font-display text-lg font-bold uppercase tracking-wide">
+        <Link href="/#profile" aria-label={profile.name} className="flex shrink-0 items-center gap-2 font-display text-lg font-bold uppercase tracking-wide">
           <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-accent text-sm text-accent-ink">
             EO
           </span>
