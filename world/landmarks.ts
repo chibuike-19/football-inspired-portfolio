@@ -64,12 +64,13 @@ function boardX(index: number, count: number): number {
 export const NORTH_BOARD_SLOTS = 6;
 
 /**
- * Overflow boards stand at the ends beside the goals, opposite the contact kiosk
- * (west) and the tunnel (east), turned towards the camera.
+ * Overflow boards stand at the ends beside the goals, turned towards the camera.
+ * East first: the journey's highlights sweep west to east and end beside the
+ * players' tunnel. East is opposite the tunnel; west is opposite the contact kiosk.
  */
 const END_SLOTS: { side: -1 | 1; z: number }[] = [
-  { side: -1, z: -(GOAL.halfWidth + 4.8) },
   { side: 1, z: GOAL.halfWidth + 4.8 },
+  { side: -1, z: -(GOAL.halfWidth + 4.8) },
 ];
 
 const northProjects = projects.slice(0, NORTH_BOARD_SLOTS);

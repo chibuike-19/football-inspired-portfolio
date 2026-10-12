@@ -3,23 +3,18 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorldStore } from "@/state/store";
-import { classicReason, initialQuality, writeViewPreference } from "./capability";
+import { classicReason, initialQuality } from "./capability";
 import { WorldErrorBoundary } from "./WorldErrorBoundary";
 
 const World = dynamic(() => import("./World"), { ssr: false });
-
-/**
- * Hashes the world can open (SPEC §10.6). A cheap pattern so the initial
- * bundle doesn't pull in the landmark data; World validates the exact id.
- */
-const LANDMARK_HASH = /^#(profile|experience|resume|contact|project\/[a-z0-9-]+)$/;
 
 /** SPEC §11.3: reveal Classic view if the world isn't ready in time. */
 const LOAD_TIMEOUT_MS = 15_000;
 
 /**
- * Decides between the 3D world and Classic view, loads the world lazily and
- * toggles `html.world-active`, which visually hides Layer 1 (it stays in the
+ * Classic view is the default (owner decision, 2026-10-12). The 3D world loads
+ * only when the visitor clicks "Explore in 3D"; this component loads it lazily
+ * and toggles `html.world-active`, which visually hides Layer 1 (it stays in the
  * accessibility tree; see globals.css).
  */
 export function WorldMount() {
@@ -34,15 +29,11 @@ export function WorldMount() {
   const timedOut = useRef(false);
 
   useEffect(() => {
+    // Only devices that can't run the world lose the "Explore in 3D" button.
     const reason = classicReason();
-    const hardBlocked = reason === "webgl2-unavailable" || reason === "save-data";
-    setCapable(!hardBlocked);
+    setCapable(reason !== "webgl2-unavailable" && reason !== "save-data");
     setQuality(initialQuality());
-    // Landmark deep links open in the world; any other hash (e.g. #main) means "show me the page".
-    if (reason || (window.location.hash && !LANDMARK_HASH.test(window.location.hash))) return;
-    setMode("world");
-    setStatus("loading");
-  }, [setCapable, setMode, setQuality, setStatus]);
+  }, [setCapable, setQuality]);
 
   useEffect(() => {
     if (status !== "loading") return;
@@ -66,7 +57,6 @@ export function WorldMount() {
   }, [active]);
 
   const enterWorld = useCallback(() => {
-    writeViewPreference("world");
     setReadyLate(false);
     timedOut.current = false;
     if (status === "idle" || status === "failed") setStatus("loading");

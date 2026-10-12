@@ -2,7 +2,7 @@
 
 A portfolio where a 3D football stadium is the navigation. See `SPEC.md` for the full specification and phase plan.
 
-**Status:** Phase 7 complete (polish and performance; see SPEC §16 for measured results). Phase 6: Explore by rolling the ball, or use the menu (Explore, Projects, Experience, Résumé, Contact) to dribble straight there. Enter, a tap on a landmark or "More details" opens a full panel; links like `/#contact` or `/#project/devspot` open the stadium at that landmark with its panel open. Visual polish and performance tuning come in Phase 7.
+**Status:** Scroll-driven journey, step 1 of 6. The classic page is the default; "Explore in 3D" opens a guided, scroll-driven story through the stadium (Kickoff → Player → Playbook → Highlights → Journey → Trophies → Full Time). Free play (driving the ball) remains available from the journey menu. The tunnel interior and trophy room arrive in steps 4–5.
 
 ## Run
 
@@ -27,15 +27,16 @@ All feel-related numbers (speed, acceleration, friction, camera height and dista
 
 ## How the 3D view loads
 
-`world/WorldMount.tsx` decides between the 3D stadium and Classic view:
+`world/WorldMount.tsx`: the classic page is always the default. "Explore in 3D" appears when the device supports WebGL2 (and Save-Data is off); clicking it loads the 3D world lazily. A render error or lost graphics context falls back to the classic page with a short notice. Landmark links such as `/#contact` always open the classic page.
 
-- **Classic view** is used without WebGL2, with Save-Data on, or when the visitor chose it before. Landmark links (`#profile`, `#experience`, `#resume`, `#contact`, `#project/<slug>`) open the stadium at that landmark; any other hash (such as `#main`) opens Classic view.
-- The world loads lazily after the HTML has painted. If it isn't ready in 15 s the page stays classic and offers "3D stadium ready: enter" when it finishes.
-- A render error or lost graphics context falls back to Classic view with a short notice.
+## The journey
 
-Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `pick(clientX, clientY)`, `renderer()`) for browser tests, and accept `?quality=high|medium|low` to force a tier.
+- `core/journey.ts`: pure scroll-to-station mapping (with hysteresis) and camera transition planning (designed route to the next chapter, short direct jumps otherwise, instant with reduced motion). Unit-tested.
+- `world/journey/stations.ts`: every resting point (camera pose, ball spot, scoreboard text, highlighted object, panel). Edit here to re-frame a chapter.
+- `world/journey/JourneyLayer.tsx`: native scrolling (one viewport per station), chapter navigation, panels. `JourneyCamera.tsx` moves the camera and ball from the shared store state.
+- Trophy cabinet content: `content/trophies.ts`.
 
-To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. This is compiled out of normal builds.
+To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or use `npm run dev`) and add `?cam=x,y,z,targetX,targetY,targetZ` to the URL. Debug builds also expose `window.__world` (`getState()`, `setBall(x, z)`, `setExperience("journey" | "freeplay")`, `pick(clientX, clientY)`, `renderer()`) for browser tests, and accept `?quality=high|medium|low` to force a tier. All of this is compiled out of normal builds.
 
 ## Deploy
 

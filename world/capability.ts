@@ -1,26 +1,5 @@
 import type { Quality } from "@/state/store";
 
-const PREFERENCE_KEY = "fp:view";
-
-export type ViewPreference = "world" | "classic";
-
-export function readViewPreference(): ViewPreference | null {
-  try {
-    const value = window.localStorage.getItem(PREFERENCE_KEY);
-    return value === "world" || value === "classic" ? value : null;
-  } catch {
-    return null;
-  }
-}
-
-export function writeViewPreference(value: ViewPreference): void {
-  try {
-    window.localStorage.setItem(PREFERENCE_KEY, value);
-  } catch {
-    // Storage blocked (private mode, policy): the preference just isn't remembered.
-  }
-}
-
 export function supportsWebGL2(): boolean {
   try {
     const canvas = document.createElement("canvas");
@@ -38,15 +17,13 @@ interface NetworkInformationLike {
 }
 
 /**
- * SPEC §11.1: the world is skipped without WebGL2, with Save-Data on, or when
- * the visitor chose Classic view before. Returns the reason, or null if the
- * world can load.
+ * SPEC §11.1: the world can't be offered without WebGL2 or with Save-Data on.
+ * Returns the reason, or null if the world can load.
  */
 export function classicReason(): string | null {
   if (!supportsWebGL2()) return "webgl2-unavailable";
   const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection;
   if (connection?.saveData) return "save-data";
-  if (readViewPreference() === "classic") return "preference";
   return null;
 }
 

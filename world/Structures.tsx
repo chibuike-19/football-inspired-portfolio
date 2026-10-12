@@ -9,7 +9,9 @@ import type { Project } from "@/content/types";
 import { BOARD, GOAL, PITCH } from "./layout";
 import { LANDMARKS, yawTowardsCamera, type LandmarkDef } from "./landmarks";
 import { createCanvas, fitText, fonts, toTexture } from "./textures/canvas";
-import { createBoardTexture, createScreenTexture } from "./textures/screens";
+import { createBoardTexture, createScreenTexture, redrawScreenTexture, type ScreenContent } from "./textures/screens";
+import { useWorldStore } from "@/state/store";
+import { useThree } from "@react-three/fiber";
 
 const FRAME = "#1b2023";
 const BOARD_TILT = -0.12;
@@ -177,17 +179,22 @@ function FillerBoards() {
   );
 }
 
+/** Default board: the profile. The journey replaces it per station (store `scoreboard`). */
+const DEFAULT_SCOREBOARD: ScreenContent = {
+  kicker: profile.location,
+  title: profile.name,
+  lines: [profile.headline, profile.strengths.slice(0, 3).join("  ·  ")],
+};
+
 function Scoreboard({ landmark }: { landmark: LandmarkDef }) {
-  const texture = useDisposable(
-    () =>
-      createScreenTexture({
-        width: 2048,
-        height: 720,
-        kicker: profile.location,
-        title: profile.name,
-        lines: [profile.headline, profile.strengths.slice(0, 3).join("  ·  ")],
-      }),
-  );
+  const texture = useDisposable(() => createScreenTexture({ width: 2048, height: 720, ...DEFAULT_SCOREBOARD }));
+  const text = useWorldStore((s) => s.scoreboard);
+  const invalidate = useThree((s) => s.invalidate);
+  // Live scoreboard: redraw the same canvas when the journey changes the message.
+  useEffect(() => {
+    redrawScreenTexture(texture, text ?? DEFAULT_SCOREBOARD);
+    invalidate();
+  }, [text, texture, invalidate]);
   const W = 15;
   const H = W * (720 / 2048);
   return (

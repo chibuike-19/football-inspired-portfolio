@@ -2,7 +2,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type RefObject } from "react";
-import { PerspectiveCamera, Quaternion, Vector3, type Mesh } from "three";
+import { PerspectiveCamera, type Mesh } from "three";
 import { autopilotInput } from "@/core/autopilot";
 import { createCamera, fovForAspect, stepCamera, type CameraState } from "@/core/camera";
 import { createDiscovery, stepDiscovery } from "@/core/discovery";
@@ -14,6 +14,7 @@ import type { Simulation } from "@/core/simulation";
 import { useWorldStore } from "@/state/store";
 import type { InputController } from "./input";
 import { cameraFocus, DISCOVERY_LANDMARKS, LANDMARK_BY_ID, SPAWN } from "./landmarks";
+import { rollBall } from "./ballRoll";
 import { BALL, PITCH } from "./layout";
 
 interface Props {
@@ -25,8 +26,6 @@ interface Props {
   freeCamera: boolean;
 }
 
-const axis = new Vector3();
-const spin = new Quaternion();
 
 /** Opening shot (SPEC §10.5): start a little higher and further back, then settle. */
 function openingCamera(x: number, z: number, reducedMotion: boolean): CameraState {
@@ -122,16 +121,7 @@ export function WorldController({ simulation, input, ball, reducedMotion, freeCa
     const mesh = ball.current;
     if (mesh) {
       mesh.position.set(x, BALL.radius, z);
-      // Roll without slipping: rotate about (up × travel) by distance / radius.
-      const dx = x - rendered.current.x;
-      const dz = z - rendered.current.z;
-      const distance = Math.hypot(dx, dz);
-      // Skip teleports (placement, deep links): only roll for real travel.
-      if (distance > 1e-5 && distance < 1) {
-        axis.set(dz / distance, 0, -dx / distance);
-        spin.setFromAxisAngle(axis, distance / BALL.radius);
-        mesh.quaternion.premultiply(spin);
-      }
+      rollBall(mesh, x - rendered.current.x, z - rendered.current.z);
     }
     rendered.current.x = x;
     rendered.current.z = z;

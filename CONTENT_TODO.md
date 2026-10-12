@@ -18,6 +18,10 @@ Until resolved, the site hides or omits these items rather than inventing values
 - [ ] When the first post is ready: replace `app/blog/page.tsx`, remove its `robots: { index: false }` and add `/blog/` to `app/sitemap.ts`.
 - [ ] A larger photo (512 px or more) would make the hero tile sharper on high-density screens; the current one is 200 px (`public/avatar.jpg`, also the favicon source).
 
+## Journey (3D) — open items
+- [ ] Phones: in Career Highlights the bottom sheet covers the board; portrait framing is part of journey step 6.
+- [ ] Journey and Trophy chapters use placeholder camera positions until the tunnel interior (step 4) and trophy room (step 5) are built.
+
 ## Optional
 - [ ] Project screenshots. DevSpot: any you can share. FCMB: only with client permission. Otherwise boards stay typographic.
 - [ ] Domain: set `NEXT_PUBLIC_SITE_URL` at build time (see README).

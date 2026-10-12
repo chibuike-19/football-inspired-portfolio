@@ -106,3 +106,12 @@ export interface ContactLinks {
   linkedin: ExternalLink;
   resume: ExternalLink;
 }
+
+/** One display in the trophy cabinet. */
+export interface Trophy {
+  id: string;
+  title: string;
+  /** Where it was earned, e.g. "DevSpot". */
+  context: string;
+  items: string[];
+}

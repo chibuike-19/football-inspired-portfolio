@@ -1,4 +1,5 @@
 import type { Project } from "@/content/types";
+import type { CanvasTexture } from "three";
 import { BOARD } from "../layout";
 import { createCanvas, fitText, fonts, toTexture, wrapText } from "./canvas";
 
@@ -48,17 +49,26 @@ export function createBoardTexture(project: Project) {
   return toTexture(canvas);
 }
 
-/** Generic stadium screen: kicker, title and up to two lines of detail. */
-export function createScreenTexture(options: {
-  width: number;
-  height: number;
+export interface ScreenContent {
   kicker: string;
   title: string;
   lines?: string[];
   accent?: string;
-}) {
-  const { width: W, height: H, kicker, title, lines = [], accent = "#818cf8" } = options;
-  const { canvas, ctx } = createCanvas(W, H);
+}
+
+/** Generic stadium screen: kicker, title and up to two lines of detail. */
+export function createScreenTexture(options: ScreenContent & { width: number; height: number }) {
+  const { canvas, ctx } = createCanvas(options.width, options.height);
+  drawScreen(ctx, options);
+  return toTexture(canvas);
+}
+
+/** Draws (or redraws) a screen onto an existing canvas, e.g. the live scoreboard. */
+export function drawScreen(ctx: CanvasRenderingContext2D, content: ScreenContent): void {
+  const W = ctx.canvas.width;
+  const H = ctx.canvas.height;
+  const { kicker, title, lines = [], accent = "#818cf8" } = content;
+  ctx.clearRect(0, 0, W, H);
 
   const gradient = ctx.createLinearGradient(0, 0, 0, H);
   gradient.addColorStop(0, "#111726");
@@ -95,6 +105,12 @@ export function createScreenTexture(options: {
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   for (let x = 0; x < W; x += 5) ctx.fillRect(x, 0, 1, H);
   for (let y = 0; y < H; y += 5) ctx.fillRect(0, y, W, 1);
+}
 
-  return toTexture(canvas);
+/** Redraws a screen texture's canvas with new content and marks it for upload. */
+export function redrawScreenTexture(texture: CanvasTexture, content: ScreenContent): void {
+  const ctx = (texture.image as HTMLCanvasElement).getContext("2d");
+  if (!ctx) return;
+  drawScreen(ctx, content);
+  texture.needsUpdate = true;
 }

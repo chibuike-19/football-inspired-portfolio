@@ -8,15 +8,15 @@ import { createSimulation, type Simulation } from "@/core/simulation";
 import { gameOwnsKeyboard } from "@/core/input";
 import { useWorldStore, type MotionSetting, type Quality } from "@/state/store";
 import { buttonStyles } from "@/ui/primitives";
-import { writeViewPreference } from "./capability";
 import { Ball } from "./Ball";
 import { BlobShadow } from "./BlobShadow";
 import { createInputController } from "./input";
 import { Joystick } from "./Joystick";
 import { BALL } from "./layout";
-import { LANDMARK_BY_ID, SPAWN } from "./landmarks";
+import { SPAWN } from "./landmarks";
+import { JourneyCamera } from "./journey/JourneyCamera";
+import { JourneyLayer } from "./journey/JourneyLayer";
 import { ExpandedPanel } from "./ExpandedPanel";
-import { landmarkFromHash } from "./hash";
 import { Hud } from "./Hud";
 import { Onboarding } from "./Onboarding";
 import { TapBridge, type TapPicker } from "./TapBridge";
@@ -61,8 +61,19 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
     if (!DEBUG) return;
     const hook = {
       getState: () => {
-        const { activeLandmarkId, expandedId, autopilot, reducedMotion } = useWorldStore.getState();
-        return { ball: { ...simulation.ball }, activeLandmarkId, expandedId, autopilot, reducedMotion };
+        const { activeLandmarkId, expandedId, autopilot, reducedMotion, experience, journeyStation, scoreboard } = useWorldStore.getState();
+        const camera = get().camera.position;
+        return {
+          ball: { ...simulation.ball },
+          activeLandmarkId,
+          expandedId,
+          autopilot,
+          reducedMotion,
+          experience,
+          journeyStation,
+          scoreboard,
+          camera: { x: camera.x, y: camera.y, z: camera.z },
+        };
       },
       pick: (clientX: number, clientY: number) => pick()?.(clientX, clientY) ?? null,
       renderer: () => {
@@ -73,6 +84,7 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null) {
         simulation.place(x, z);
         invalidate();
       },
+      setExperience: (experience: "journey" | "freeplay") => useWorldStore.getState().setExperience(experience),
     };
     (window as unknown as { __world?: typeof hook }).__world = hook;
     return () => {
@@ -179,7 +191,6 @@ function SlowNotice() {
   const dismiss = useWorldStore((state) => state.dismissSlowNotice);
   if (!show) return null;
   const switchToClassic = () => {
-    writeViewPreference("classic");
     dismiss();
     useWorldStore.getState().setMode("classic");
   };
@@ -210,13 +221,13 @@ export default function World() {
   const [canvasShadows] = useState(() => QUALITY[readDebugQuality() ?? quality].shadows);
   const reducedMotion = useMotion();
   const [debugCamera] = useState(readDebugCamera);
-  // Deep link (SPEC §10.6): start at that landmark with its panel open.
-  const [deepLink] = useState(() => landmarkFromHash(window.location.hash));
-  const [simulation] = useState(() => {
-    const landmark = deepLink ? LANDMARK_BY_ID.get(deepLink) : undefined;
-    const spawn = landmark ? { x: landmark.position[0], z: landmark.position[1] } : { x: SPAWN[0], z: SPAWN[1] };
-    return createSimulation({ radius: BALL.radius, obstacles: OBSTACLES, bounds: BOUNDS, spawn });
-  });
+  const [simulation] = useState(() =>
+    createSimulation({ radius: BALL.radius, obstacles: OBSTACLES, bounds: BOUNDS, spawn: { x: SPAWN[0], z: SPAWN[1] } }),
+  );
+  const experience = useWorldStore((state) => state.experience);
+  const freeplay = experience === "freeplay";
+  // The journey resumes from the live camera after free play, not from the establishing shot.
+  const journeyResume = useWorldStore((state) => state.journeyResume);
   const [input] = useState(createInputController);
   useEffect(() => () => input.dispose(), [input]);
 
@@ -229,13 +240,26 @@ export default function World() {
 
   useEffect(() => input.setGameSurface(surface.current), [input]);
   useEffect(() => input.setPanelOpen(expandedId !== null), [input, expandedId]);
-  useEffect(() => {
-    if (deepLink) openPanel(deepLink);
-  }, [deepLink, openPanel]);
   usePanelHistory();
 
-  // Enter / Space on an active landmark opens its details (routing table, SPEC §7.1).
+  // Switching experience hands the ball over where it is, and resets the
+  // journey-only stadium state (scoreboard text, highlights).
   useEffect(() => {
+    const store = useWorldStore.getState();
+    if (freeplay) {
+      const mesh = ball.current;
+      if (mesh) simulation.place(mesh.position.x, mesh.position.z);
+      store.setScoreboard(null);
+      store.setDiscovery(null, {});
+      // The journey's scroller just unmounted: give the keyboard to the stadium, so
+      // the next Tab doesn't fall into the hidden classic page.
+      surface.current?.focus({ preventScroll: true });
+    }
+  }, [freeplay, simulation]);
+
+  // Enter / Space on an active landmark opens its details (routing table, SPEC §7.1). Free play only.
+  useEffect(() => {
+    if (!freeplay) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       const { activeLandmarkId, expandedId: open } = useWorldStore.getState();
@@ -246,7 +270,7 @@ export default function World() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [openPanel]);
+  }, [openPanel, freeplay]);
 
   const registerPicker = useCallback((next: TapPicker | null) => {
     picker.current = next;
@@ -280,12 +304,14 @@ export default function World() {
 
   return (
     <div className="relative h-full w-full">
-      <Hud simulation={simulation} gameSurface={surface} />
+      {freeplay && <Hud simulation={simulation} gameSurface={surface} />}
       <div
         ref={surface}
-        tabIndex={0}
-        role="application"
-        aria-label="3D stadium. Move the ball with W A S D, the arrow keys or by dragging. Press Enter near a landmark for details."
+        tabIndex={freeplay ? 0 : -1}
+        role={freeplay ? "application" : undefined}
+        aria-label={
+          freeplay ? "3D stadium. Move the ball with W A S D, the arrow keys or by dragging. Press Enter near a landmark for details." : undefined
+        }
         className="game-surface relative h-full w-full touch-none select-none outline-none"
       >
         <Canvas
@@ -301,14 +327,20 @@ export default function World() {
           {debugCamera && <DebugCamera values={debugCamera} />}
           <DebugHook simulation={simulation} pick={getPicker} />
           <TapBridge register={registerPicker} />
-          <WorldController
-            simulation={simulation}
-            input={input}
-            ball={ball}
-            reducedMotion={reducedMotion}
-            freeCamera={debugCamera !== null}
-          />
-          <PreviewTracker card={card} simulation={simulation} />
+          {freeplay ? (
+            <>
+              <WorldController
+                simulation={simulation}
+                input={input}
+                ball={ball}
+                reducedMotion={reducedMotion}
+                freeCamera={debugCamera !== null}
+              />
+              <PreviewTracker card={card} simulation={simulation} />
+            </>
+          ) : (
+            !debugCamera && <JourneyCamera ball={ball} resume={journeyResume} />
+          )}
           {stage >= 1 && (
             <>
               <Pitch pixelsPerUnit={settings.pitchPixelsPerUnit} />
@@ -321,16 +353,22 @@ export default function World() {
           {stage >= 4 && <Structures />}
           {stage >= 5 && (
             <>
-              <GroundMarkers />
+              {freeplay && <GroundMarkers />}
               <ReadySignal />
             </>
           )}
         </Canvas>
-        <Joystick surface={surface} input={input} onTap={onTap} />
-        <PreviewCard card={card} />
-        <Onboarding input={input} />
+        {freeplay ? (
+          <>
+            <Joystick surface={surface} input={input} onTap={onTap} />
+            <PreviewCard card={card} />
+            <Onboarding input={input} />
+            <DiscoveryAnnouncer />
+          </>
+        ) : (
+          <JourneyLayer picker={picker} />
+        )}
         <SlowNotice />
-        <DiscoveryAnnouncer />
       </div>
       <ExpandedPanel returnFocus={surface} />
     </div>

@@ -6,7 +6,6 @@ import { profile } from "@/content/profile";
 import type { Simulation } from "@/core/simulation";
 import { useWorldStore } from "@/state/store";
 import { buttonStyles } from "@/ui/primitives";
-import { writeViewPreference } from "./capability";
 import { LANDMARKS } from "./landmarks";
 
 type NavId = "explore" | "projects" | "experience" | "resume" | "contact";
@@ -83,7 +82,6 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
     (id === "projects" && activeId?.startsWith("project:")) || activeId === id || (id === "explore" && activeId === "profile");
 
   const enterClassic = () => {
-    writeViewPreference("classic");
     useWorldStore.getState().setMode("classic");
   };
 
@@ -117,6 +115,9 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
         </ul>
       </nav>
       <div className="hud-panel hidden items-center gap-1 md:flex">
+        <button type="button" onClick={() => useWorldStore.getState().setExperience("journey")} className="hud-link">
+          Guided tour
+        </button>
         <a href="/blog/" className="hud-link">
           Blog
         </a>
@@ -150,6 +151,15 @@ export function Hud({ simulation, gameSurface }: { simulation: Simulation; gameS
             {NAV.map((item) => (
               <li key={item.id}>{navButton(item, "w-full justify-start text-base")}</li>
             ))}
+            <li>
+              <button
+                type="button"
+                onClick={() => useWorldStore.getState().setExperience("journey")}
+                className="hud-link w-full justify-start text-base"
+              >
+                Guided tour
+              </button>
+            </li>
             <li>
               <a href="/blog/" className="hud-link w-full justify-start text-base">
                 Blog
