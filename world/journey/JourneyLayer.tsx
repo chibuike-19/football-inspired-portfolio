@@ -9,6 +9,7 @@ import { buttonStyles } from "@/ui/primitives";
 import type { TapPicker } from "../TapBridge";
 import { StationPanel } from "./panels";
 import { PlaybookOverlay } from "./Playbook";
+import { AutoplayControl } from "./Autoplay";
 import { chapterStart, STATIONS, stationById } from "./stations";
 
 /**
@@ -59,6 +60,7 @@ function JourneyNav() {
         </ol>
       </nav>
       <div className="hud-panel hidden items-center gap-1 lg:flex">
+        <AutoplayControl />
         <button type="button" onClick={() => setExperience("freeplay")} className="hud-link">
           Free play
         </button>
@@ -71,6 +73,9 @@ function JourneyNav() {
       </div>
 
       <div className="ml-auto flex items-center gap-2 lg:hidden">
+        <div className="hud-panel">
+          <AutoplayControl driver={false} />
+        </div>
         <button type="button" onClick={() => setMode("classic")} className={`${buttonStyles.secondary} min-h-11 px-3`}>
           Classic view
         </button>

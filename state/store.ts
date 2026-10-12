@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { HoldReason } from "@/core/autoplay";
 import type { ProximityState } from "@/core/discovery";
 
 /** Proximity states plus "dim": pushed back while another landmark has the focus (journey). */
@@ -56,6 +57,13 @@ interface WorldState {
   /** Seconds before the next panel should appear (overlaps the camera move). */
   panelDelay: number;
   setPanelDelay: (seconds: number) => void;
+  /** Seconds the current camera move takes (autoplay waits for it before the dwell). */
+  moveDuration: number;
+  /** Autoplay: on unless the visitor paused it. `holds` are temporary pauses (hover, focus, panel…). */
+  autoplay: boolean;
+  setAutoplay: (on: boolean) => void;
+  autoplayHolds: HoldReason[];
+  setAutoplayHold: (reason: HoldReason, held: boolean) => void;
   scoreboard: ScoreboardText | null;
   setScoreboard: (text: ScoreboardText | null) => void;
   /** Stadium lighting mood: "closing" dims and warms the lights at full time. */
@@ -111,6 +119,16 @@ export const useWorldStore = create<WorldState>()((set) => ({
   requestJourneyJump: (station, replay = false) => set({ journeyJump: { station, replay, requestId: ++journeyRequests } }),
   panelDelay: 0,
   setPanelDelay: (panelDelay) => set({ panelDelay }),
+  moveDuration: 0,
+  autoplay: true,
+  setAutoplay: (autoplay) => set({ autoplay }),
+  autoplayHolds: [],
+  setAutoplayHold: (reason, held) =>
+    set((state) => {
+      const has = state.autoplayHolds.includes(reason);
+      if (has === held) return state;
+      return { autoplayHolds: held ? [...state.autoplayHolds, reason] : state.autoplayHolds.filter((r) => r !== reason) };
+    }),
   scoreboard: null,
   setScoreboard: (scoreboard) => set({ scoreboard }),
   stadiumMood: "match",

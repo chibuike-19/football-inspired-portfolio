@@ -305,7 +305,10 @@ function FullTimePanel() {
       </div>
       <p className="mt-3 select-all break-all font-mono text-xs text-muted">{contact.email}</p>
       <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-line pt-5">
-        <button type="button" onClick={() => go(chapterStart("kickoff"), true)} className={textLink}>
+        <button type="button" onClick={() => {
+            useWorldStore.getState().setAutoplay(true);
+            go(chapterStart("kickoff"), true);
+          }} className={textLink}>
           Replay the journey ↺
         </button>
         <button type="button" onClick={() => useWorldStore.getState().setExperience("freeplay")} className={textLink}>

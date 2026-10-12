@@ -1263,3 +1263,12 @@ html.reduce-motion .journey-panel[data-state="out"] {
     transition: none;
   }
 }
+
+.autoplay-button {
+  gap: 0.35rem;
+  padding: 0 0.55rem;
+}
+
+.autoplay-button:disabled {
+  opacity: 0.5;
+}

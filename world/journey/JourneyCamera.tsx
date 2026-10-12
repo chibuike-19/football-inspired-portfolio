@@ -138,6 +138,7 @@ export function JourneyCamera({ ball, resume }: Props) {
     pendingArrival.current = bridging ? target : null;
     // Content appears as the camera is arriving, not after it stops (spec §5).
     setPanelDelay(kind === "intro" ? 0.35 : plan.duration * 0.55);
+    useWorldStore.setState({ moveDuration: plan.duration });
     invalidate();
   }, [station, portrait, invalidate]);
 

@@ -22,6 +22,7 @@ declare global {
       getState: () => WorldState;
       setBall: (x: number, z: number) => void;
       setExperience: (e: "journey" | "freeplay") => void;
+      setAutoplay: (on: boolean) => void;
       pick: (x: number, y: number) => string | null;
       renderer: () => { calls: number; quality: string };
     };
@@ -32,7 +33,7 @@ declare global {
 export const state = (page: Page) => page.evaluate(() => window.__world.getState());
 
 /** Classic view is the default: click "Explore in 3D" (and optionally switch to free play). */
-export async function enterWorld(page: Page, { freeplay = false } = {}) {
+export async function enterWorld(page: Page, { freeplay = false, keepAutoplay = false } = {}) {
   await page.getByRole("button", { name: /Explore in 3D/ }).click();
   await page.waitForFunction(() => document.documentElement.classList.contains("world-active") && !!window.__world, null, {
     timeout: 25_000,
@@ -44,6 +45,8 @@ export async function enterWorld(page: Page, { freeplay = false } = {}) {
   } else {
     await page.waitForFunction(() => window.__world.getState().journeyStation === 0);
   }
+  // Most tests drive the journey themselves; tests/e2e/autoplay.spec.ts covers autoplay.
+  if (!keepAutoplay) await page.evaluate(() => window.__world.setAutoplay(false));
 }
 
 export async function openJourney(page: Page) {

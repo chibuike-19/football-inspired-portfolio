@@ -93,6 +93,7 @@ function useDebugHook(simulation: Simulation, pick: () => TapPicker | null, ball
         invalidate();
       },
       setExperience: (experience: "journey" | "freeplay") => useWorldStore.getState().setExperience(experience),
+      setAutoplay: (on: boolean) => useWorldStore.getState().setAutoplay(on),
     };
     (window as unknown as { __world?: typeof hook }).__world = hook;
     return () => {
