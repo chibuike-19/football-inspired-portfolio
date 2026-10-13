@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { contact, profile } from "@/content";
 import { ArrowRight, FileText, GitHub, LinkedIn } from "../icons";
-import { buttonStyles, SystemLabel, TagList } from "../primitives";
+import { buttonStyles, SystemLabel } from "../primitives";
 
 /** Stack nodes around the monogram: percentage positions inside the graph box. */
 const NODE_POSITIONS: [number, number][] = [
@@ -154,9 +154,16 @@ export function ProfileAbout({ compact = false }: { compact?: boolean }) {
         {profile.capabilities.map((capability) => (
           <div key={capability.title}>
             <h3 className="font-display text-2xl uppercase tracking-wide">{capability.title}</h3>
-            <div className="mt-2">
-              <TagList items={capability.items} label={capability.title} />
-            </div>
+            <ul className="mt-2 space-y-1.5 text-sm text-text/90">
+              {capability.items.map((item) => (
+                <li key={item} className="flex gap-2.5">
+                  <span aria-hidden="true" className="font-mono text-xs leading-5 text-accent">
+                    ▹
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>
