@@ -3,7 +3,6 @@
 Until resolved, the site hides or omits these items rather than inventing values.
 
 ## Needs attention
-- [ ] **Your phone number is in `public/resume.pdf`.** The site itself doesn't show it, but anyone who downloads the résumé will see it. If you don't want it public, export a version without the phone number and replace the file.
 - [ ] **Stream2Peer's live site (stream2peer.mov) is down**: the domain no longer resolves. The board links to the GitHub repo and your merged PRs only. If a new live URL exists, add it to `content/projects.ts`.
 - [ ] Approve or edit the intro and bio in `content/profile.ts`.
 
@@ -26,6 +25,7 @@ Until resolved, the site hides or omits these items rather than inventing values
 - [ ] Résumé PDF: the visible GitHub text reads `chubuike-19` (the clickable link is correct), and its titles and dates differ from LinkedIn, which the site follows.
 
 ## Resolved
+- Résumé PDF replaced 2026-10-13 (seW version): no phone number on it.
 - Headline is "Senior Full-Stack Engineer" (owner, 2026-10-12). Hero signals and capabilities use only figures from the résumé and LinkedIn.
 - Stream2Peer and roadmap.sh added as boards.
 - JudgeBot and builder matching are AI features built in Python.
