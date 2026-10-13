@@ -7,7 +7,7 @@ import type { Trophy } from "./types";
 export const trophies: Trophy[] = [
   {
     id: "hackathon-scale",
-    title: "Global hackathon platform",
+    title: "Built for scale",
     context: "DevSpot",
     items: [
       "Authentication layer used across 11 global hackathons",
@@ -17,7 +17,7 @@ export const trophies: Trophy[] = [
   },
   {
     id: "banking-grade",
-    title: "Banking-grade engineering",
+    title: "Built for trust",
     context: "Rova · FCMB Group",
     items: [
       "Built the corporate banking admin portal single-handedly",
@@ -33,7 +33,7 @@ export const trophies: Trophy[] = [
   },
   {
     id: "mentorship",
-    title: "Mentorship",
+    title: "Helping others grow",
     context: "NitHub",
     items: ["Mentored 50+ engineers"],
   },

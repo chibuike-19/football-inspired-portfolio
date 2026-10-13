@@ -153,7 +153,7 @@ function PlaybookPanel() {
     <>
       <p className={kicker}>Tactics · 4-3-3</p>
       <h2 className={`${heading} mt-2 text-5xl`}>The playbook</h2>
-      <p className="mt-2 text-sm text-muted">The technologies behind the game: my starting XI.</p>
+      <p className="mt-2 text-sm text-muted">The principles behind the game: my starting XI.</p>
       {/* Updates in place as players are selected; announced politely for screen readers. */}
       <div className="mt-5 min-h-44 border border-line bg-ink/40 p-4" aria-live="polite">
         {skill ? (

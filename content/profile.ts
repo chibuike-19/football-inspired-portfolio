@@ -9,7 +9,7 @@ export const profile: Profile = {
   subheadline: "Frontend-focused: Next.js, React and TypeScript. Test-driven, code-review-minded, built for auth and data-heavy products.",
   location: "Lagos, Nigeria",
   intro:
-    "I design and ship production web platforms, from banking solutions to AI automated systems, and I ensure the quality of the code that powers them.",
+    "I build web products that people rely on, from corporate banking tools to hackathon platforms. I care about the parts users never see: clear code, good tests and changes that are safe to ship.",
   bio: [
     "I start by understanding the problem before I write code. Most bugs I've fixed came from a requirement nobody fully understood, not from a hard algorithm.",
     "I prefer simple, readable code over clever code. The next person to touch it, often me in six months, should be able to follow it without a walkthrough. Small, focused pull requests make that easier to review and safer to ship.",
@@ -29,8 +29,8 @@ export const profile: Profile = {
   stackGraph: ["Next.js", "React", "TypeScript", "Python · AI", "Node.js", "AWS"],
   capabilities: [
     {
-      title: "Product frontend",
-      summary: "Architecture for auth and data-heavy products that stay fast and findable.",
+      title: "Frontend",
+      summary: "Interfaces that are fast, accessible and easy to change.",
       items: [
         "Next.js, React, TypeScript",
         "Auth and session design",
@@ -41,8 +41,8 @@ export const profile: Profile = {
       ],
     },
     {
-      title: "Backend and AI",
-      summary: "The services and AI features behind the interface.",
+      title: "Backend & data",
+      summary: "APIs, data and the services behind the screen, including AI features in Python.",
       items: [
         "Python AI features: matching and judging agents",
         "Node.js and Django services",
@@ -52,8 +52,8 @@ export const profile: Profile = {
       ],
     },
     {
-      title: "Quality and delivery",
-      summary: "How a team ships safely, not only what I ship.",
+      title: "Engineering practice",
+      summary: "Testing, review and the habits that keep a codebase healthy.",
       items: [
         "Test-driven development (85%+ coverage)",
         "GitHub Actions on every pull request",
