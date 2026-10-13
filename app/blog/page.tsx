@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { contact, profile } from "@/content";
+import { pageMetadata } from "@/lib/metadata";
 import { ArrowLeft, GitHub, LinkedIn } from "@/ui/icons";
 import { buttonStyles, SystemLabel } from "@/ui/primitives";
 import { SiteFooter, SiteHeader } from "@/ui/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "Blog",
-  description: `Engineering notes and articles by ${profile.name}. Coming soon.`,
-  alternates: { canonical: "/blog/" },
+  ...pageMetadata({
+    title: `Blog — ${profile.name}`,
+    description: `Engineering notes and articles by ${profile.name}. Coming soon.`,
+    path: "/blog/",
+  }),
   // Nothing to index yet; switch this off with the first post.
   robots: { index: false, follow: true },
 };

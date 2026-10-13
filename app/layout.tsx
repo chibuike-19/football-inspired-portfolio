@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Iceland } from "next/font/google";
+import { pageMetadata } from "@/lib/metadata";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site";
 import { profile } from "@/content";
 import "./globals.css";
@@ -13,18 +14,10 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  ...pageMetadata({ title: SITE_TITLE, description: SITE_DESCRIPTION, path: "/" }),
+  // Pages pass a plain title; the template adds the name.
   title: { default: SITE_TITLE, template: `%s — ${profile.name}` },
-  description: SITE_DESCRIPTION,
   authors: [{ name: profile.name }],
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    siteName: profile.name,
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    url: "/",
-  },
-  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
 };
 
 export const viewport: Viewport = {

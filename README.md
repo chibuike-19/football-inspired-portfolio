@@ -50,7 +50,9 @@ To inspect the scene from any angle, build with `NEXT_PUBLIC_WORLD_DEBUG=1` (or 
 
 The build is fully static (`output: "export"`). Deploy `out/` to any static host (Vercel, Netlify, Cloudflare Pages, GitHub Pages).
 
-Set **`NEXT_PUBLIC_SITE_URL`** to the final domain at build time (e.g. `https://emmanuelobiechina.dev`). It is used for canonical URLs, Open Graph tags, the sitemap and robots.txt. Without it they point at `http://localhost:3000`.
+Link previews (X, WhatsApp, LinkedIn, Slack…) need absolute URLs. `lib/site.ts` picks the site address automatically: **`NEXT_PUBLIC_SITE_URL`** if set (use this for your custom domain, e.g. `https://emmanuelobiechina.dev`), otherwise Vercel's production address (`VERCEL_PROJECT_PRODUCTION_URL`), otherwise localhost for local builds. After adding or changing `NEXT_PUBLIC_SITE_URL` in Vercel, redeploy.
+
+Platforms cache previews. After a fix, re-scrape with LinkedIn's Post Inspector (linkedin.com/post-inspector) or Facebook's Sharing Debugger; for WhatsApp or X, share the URL with a query string such as `?v=2` to bypass their cache.
 
 ## Look and feel
 
@@ -74,7 +76,7 @@ Content sources and open items: `CONTENT.md`, `CONTENT_TODO.md`.
 
 ## Social preview image
 
-`app/opengraph-image.png` is a committed PNG so static hosts serve it with the right content type. It is generated from `scripts/opengraph-image.tsx`; the regeneration steps are in that file's header comment.
+`public/og-image.png` (1200 × 630) is the preview thumbnail for every page. It is generated from `scripts/opengraph-image.tsx` (your photo, name and headline); the regeneration steps are in that file's header comment.
 
 ## Structure
 

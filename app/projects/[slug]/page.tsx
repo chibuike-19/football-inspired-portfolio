@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProject, projects } from "@/content";
+import { getProject, profile, projects } from "@/content";
+import { pageMetadata } from "@/lib/metadata";
 import { kindLabel } from "@/lib/project";
 import { ArrowLeft } from "@/ui/icons";
 import { SiteFooter, SiteHeader } from "@/ui/SiteHeader";
@@ -17,12 +18,11 @@ export async function generateMetadata(props: PageProps<"/projects/[slug]">): Pr
   const { slug } = await props.params;
   const project = getProject(slug);
   if (!project) return {};
-  return {
-    title: project.name,
+  return pageMetadata({
+    title: `${project.name} — ${profile.name}`,
     description: project.oneLiner,
-    alternates: { canonical: `/projects/${project.slug}/` },
-    openGraph: { title: project.name, description: project.oneLiner, url: `/projects/${project.slug}/` },
-  };
+    path: `/projects/${project.slug}/`,
+  });
 }
 
 export default async function ProjectPage(props: PageProps<"/projects/[slug]">) {
