@@ -11,9 +11,10 @@ export const profile: Profile = {
   intro:
     "I design and ship production web platforms, from banking solutions to AI automated systems, and I ensure the quality of the code that powers them.",
   bio: [
-    "I build production web applications with Next.js, React and TypeScript, working with remote teams in the US and the UK. At DevSpot I work across the stack: the product in Next.js and TypeScript, and the AI features in Python, including a system that matches builders to hackathons and an AI judge that scores submissions against organizer-defined criteria.",
-    "At Rova I built transfer and multi-level approval flows for a corporate internet banking platform, practising test-driven development with 85%+ coverage.",
-    "I use AI tools to move faster, and I own the result: I design the architecture, review every generated line for hallucinated APIs and dropped requirements, and keep tests, CI and code review in place so speed never costs quality.",
+    "I start by understanding the problem before I write code. Most bugs I've fixed came from a requirement nobody fully understood, not from a hard algorithm.",
+    "I prefer simple, readable code over clever code. The next person to touch it, often me in six months, should be able to follow it without a walkthrough. Small, focused pull requests make that easier to review and safer to ship.",
+    "I write tests for the things that would hurt if they broke, and I let them guide the design rather than bolting them on at the end. Code review is where I learn the most, from giving it as much as receiving it.",
+    "I use AI tools day to day, but I treat their output like a pull request from a new teammate: I read every line, check it against the requirement, and I'm the one accountable for what ships.",
   ],
   strengths: ["Next.js", "React", "TypeScript", "Python for AI features", "Testing & CI"],
   status: "Building at DevSpot · Remote with US and UK teams · Lagos, Nigeria",

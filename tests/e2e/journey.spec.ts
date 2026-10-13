@@ -137,10 +137,10 @@ test.describe("journey: chapters", () => {
       }
     expect(overlaps).toBe(0);
     const before = await cameraDrift(page, 0);
-    await markers.filter({ hasText: "Python AI agents" }).hover();
-    await expect(panel(page)).toContainText("JudgeBot");
-    await markers.filter({ hasText: "Testing & CI" }).focus();
-    await expect(panel(page)).toContainText("85%+");
+    await markers.filter({ hasText: "System design" }).hover();
+    await expect(panel(page)).toContainText("clear boundaries");
+    await markers.filter({ hasText: "Testing" }).focus();
+    await expect(panel(page)).toContainText("last line of defence");
     expect(before + (await cameraDrift(page, 200))).toBeLessThan(0.001);
     await page.locator(".journey-scroll").focus();
     await page.keyboard.press("PageDown");
