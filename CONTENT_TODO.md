@@ -11,7 +11,7 @@ Until resolved, the site hides or omits these items rather than inventing values
 - [ ] Mobile app store links (App Store / Google Play), if the app is public. Until then the card says "Mobile app for FCMB corporate customers".
 - [ ] roadmap.sh: the résumé says 15 merged PRs; GitHub shows 6 merged PRs by `chibuike-19` in `nilbuild/developer-roadmap` (the site links to that list), so the site states no count. Tell me where the other PRs are (another account or repo) to show the number.
 - [ ] KAM Holding: confirm what you built on kamholding.net. The card says you built the Next.js site including divisions/subsidiaries, CSR, media, careers, quotation/enquiry forms and newsletter sign-up.
-- [ ] Résumé PDF (updated 2026-10-12): still shows the phone number and education (both kept off the site), the visible GitHub text `chubuike-19` (link is correct), and Rova as "Senior Frontend Engineer (contract), Lagos" while the site follows LinkedIn ("Senior Frontend Developer, London · Remote").
+- [ ] Résumé PDF: the visible GitHub text reads `chubuike-19` (the link itself is correct), it lists education (kept off the site), and Rova reads "Senior Frontend Engineer (contract), Lagos" while the site follows LinkedIn ("Senior Frontend Developer, London · Remote").
 
 ## Blog and photo (added 2026-10-12)
 - [ ] When the first post is ready: replace `app/blog/page.tsx`, remove its `robots: { index: false }` and add `/blog/` to `app/sitemap.ts`.
