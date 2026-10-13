@@ -77,6 +77,11 @@ describe("playbook", () => {
     expect(new Set(playbook.map((s) => s.id)).size).toBe(11);
   });
 
+  it("has unique shirt numbers 1–11", async () => {
+    const { playbook } = await import("@/content");
+    expect(playbook.map((s) => s.position).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  });
+
   it("only uses existing capability groups", async () => {
     const { playbook, profile } = await import("@/content");
     const groups = new Set(profile.capabilities.map((c) => c.title));

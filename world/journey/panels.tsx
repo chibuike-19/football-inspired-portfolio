@@ -159,7 +159,7 @@ function PlaybookPanel() {
         {skill ? (
           <>
             <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-accent">
-              #{playbook.indexOf(skill) + 1} · {skill.role} · {skill.group}
+              #{skill.position} · {skill.role} · {skill.group}
             </p>
             <p className={`${heading} mt-2 text-3xl`}>{skill.name}</p>
             <p className="mt-2 leading-relaxed text-text/90">{skill.detail}</p>

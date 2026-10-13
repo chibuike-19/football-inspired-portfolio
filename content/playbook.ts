@@ -16,6 +16,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Testing",
     detail: "The last line of defence. Tests on the paths that matter most, so changes are safe to make.",
     group: "Engineering practice",
+    position: 1,
   },
   {
     id: "review",
@@ -24,6 +25,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Code review",
     detail: "Reading code carefully and giving clear, kind feedback. Catching problems before users do.",
     group: "Engineering practice",
+    position: 2,
   },
   {
     id: "clean-code",
@@ -32,6 +34,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Clean, readable code",
     detail: "Clear names, small functions, no cleverness for its own sake. Code is read far more than it's written.",
     group: "Engineering practice",
+    position: 5,
   },
   {
     id: "security",
@@ -40,6 +43,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Security fundamentals",
     detail: "Validating input, handling auth and sessions properly, and never trusting the client.",
     group: "Backend & data",
+    position: 6,
   },
   {
     id: "data",
@@ -48,6 +52,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Data modelling",
     detail: "Getting the shape of the data right early, because everything built on top depends on it.",
     group: "Backend & data",
+    position: 3,
   },
   {
     id: "system-design",
@@ -56,6 +61,7 @@ export const playbook: PlaybookSkill[] = [
     name: "System design",
     detail: "Breaking a problem into parts with clear boundaries, and choosing the simplest design that will hold up.",
     group: "Backend & data",
+    position: 8,
   },
   {
     id: "api-design",
@@ -64,6 +70,7 @@ export const playbook: PlaybookSkill[] = [
     name: "API design",
     detail: "Predictable, well-named interfaces with sensible errors, so frontend and backend can move independently.",
     group: "Backend & data",
+    position: 4,
   },
   {
     id: "types",
@@ -72,6 +79,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Type safety",
     detail: "Using TypeScript to make invalid states hard to represent and refactoring less risky.",
     group: "Frontend",
+    position: 10,
   },
   {
     id: "frontend",
@@ -80,6 +88,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Frontend architecture",
     detail: "Structuring React and Next.js apps so they stay maintainable as they grow.",
     group: "Frontend",
+    position: 11,
   },
   {
     id: "performance",
@@ -88,6 +97,7 @@ export const playbook: PlaybookSkill[] = [
     name: "Performance",
     detail: "Measuring first, then fixing what actually matters: bundle size, loading and rendering.",
     group: "Frontend",
+    position: 9,
   },
   {
     id: "accessibility",
@@ -96,5 +106,6 @@ export const playbook: PlaybookSkill[] = [
     name: "Accessibility & UX",
     detail: "Building interfaces that work for everyone, with a keyboard, a screen reader or a slow phone.",
     group: "Frontend",
+    position: 7,
   },
 ];

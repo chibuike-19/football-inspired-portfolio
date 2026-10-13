@@ -101,7 +101,7 @@ export function PlaybookOverlay() {
         ))}
       </svg>
       <ul aria-label="The starting XI: select a player to see the skill">
-        {playbook.map((skill, index) => (
+        {playbook.map((skill) => (
           <li
             key={skill.id}
             className="playbook-marker"
@@ -120,9 +120,9 @@ export function PlaybookOverlay() {
               onFocus={() => select(skill.id)}
               onClick={() => select(skill.id)}
             >
-              {/* Shirt numbers: 1 in goal, 2–5 defence, 6–8 midfield, 9–11 attack. */}
+              {/* Shirt number, set per skill in content/playbook.ts. */}
               <span aria-hidden="true" className="playbook-dot">
-                {index + 1}
+                {skill.position}
               </span>
               <span className="playbook-name">{skill.name}</span>
             </button>

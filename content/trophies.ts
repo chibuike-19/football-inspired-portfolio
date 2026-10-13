@@ -35,7 +35,7 @@ export const trophies: Trophy[] = [
     id: "mentorship",
     title: "Helping others grow",
     context: "NitHub",
-    items: ["Mentored 50+ engineers"],
+    items: ["Mentored 50+ engineers at Nithub"],
   },
   {
     id: "certifications",

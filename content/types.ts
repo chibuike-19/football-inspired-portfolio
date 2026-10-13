@@ -123,6 +123,8 @@ export interface PlaybookSkill {
   line: "goalkeeper" | "defence" | "midfield" | "attack";
   name: string;
   detail: string;
+  /** Shirt number shown on the pitch (1–11, unique). */
+  position: number;
   /** The capability group (profile.capabilities) it belongs to. */
   group: string;
 }
